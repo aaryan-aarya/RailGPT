@@ -1,5 +1,6 @@
 package com.irctc.irctcbackend;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -40,6 +42,17 @@ class PostgresIntegrationTest {
 
     @Autowired private TestRestTemplate rest;
     @Autowired private JdbcTemplate jdbc;
+
+    @BeforeEach
+    void bufferRequestBodies() {
+        // The JDK HttpURLConnection behind TestRestTemplate cannot read a 401
+        // response when the POST body was streamed ("cannot retry due to server
+        // authentication, in streaming mode"). Buffer request bodies so the
+        // unauthenticated-booking test can assert on the real 401 response.
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setOutputStreaming(false);
+        rest.getRestTemplate().setRequestFactory(factory);
+    }
 
     private static final AtomicInteger TRAIN_SEQ = new AtomicInteger(91000);
 
