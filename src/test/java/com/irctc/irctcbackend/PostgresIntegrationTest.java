@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -44,14 +44,13 @@ class PostgresIntegrationTest {
     @Autowired private JdbcTemplate jdbc;
 
     @BeforeEach
-    void bufferRequestBodies() {
-        // The JDK HttpURLConnection behind TestRestTemplate cannot read a 401
-        // response when the POST body was streamed ("cannot retry due to server
-        // authentication, in streaming mode"). Buffer request bodies so the
-        // unauthenticated-booking test can assert on the real 401 response.
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setOutputStreaming(false);
-        rest.getRestTemplate().setRequestFactory(factory);
+    void useJdkHttpClient() {
+        // Spring 6.1's SimpleClientHttpRequestFactory always streams request
+        // bodies (setOutputStreaming is a deprecated no-op), so the JDK
+        // HttpURLConnection cannot read the correct 401 for an unauthenticated
+        // POST ("cannot retry due to server authentication, in streaming mode").
+        // java.net.http.HttpClient has no such limitation.
+        rest.getRestTemplate().setRequestFactory(new JdkClientHttpRequestFactory());
     }
 
     private static final AtomicInteger TRAIN_SEQ = new AtomicInteger(91000);
