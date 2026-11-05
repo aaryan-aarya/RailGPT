@@ -346,9 +346,17 @@ app.get('/admin/bookings', requireAdmin, (req, res) => res.json([...db.bookings]
 
 // ---- Chatbot ----
 app.post('/chatbot/ask', (req, res) => {
+  const question = (req.body || {}).question;
+  // Mirror the Spring @NotBlank @Size(max=500) validation on ChatRequest.
+  if (typeof question !== 'string' || question.trim() === '') {
+    return err(res, 400, 'VALIDATION', 'Question is required.');
+  }
+  if (question.length > 500) {
+    return err(res, 400, 'VALIDATION', 'Question must be under 500 characters.');
+  }
   const viewer = authPayload(req);
   const viewerUser = viewer ? db.users.find((u) => u.email === viewer.sub) : null;
-  const result = answerQuestion(db, (req.body || {}).question, viewerUser?.email || null, viewerUser?.role === 'ADMIN');
+  const result = answerQuestion(db, question, viewerUser?.email || null, viewerUser?.role === 'ADMIN');
   res.json(result);
 });
 

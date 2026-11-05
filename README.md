@@ -53,42 +53,22 @@ Switch with `VITE_API_TARGET` (see below). The frontend code is identical in bot
 
 ## Quick start
 
-### Option A — preview with the demo API (no Java/DB needed)
+The **primary backend is Spring Boot + PostgreSQL** (`:8081`). The React frontend
+(`:5173`) talks to it through the Vite dev proxy (`/api` → `:8081`). A Node demo
+API (`:8090`) is kept only as an **optional fallback** for previewing the UI
+without Java/PostgreSQL — its data is illustrative, never real inventory.
 
-```bash
-# 1. Demo API
-cd demo-api && npm install && npm start          # :8090
+### Option A — the complete application (Spring Boot + PostgreSQL + React)
 
-# 2. Frontend (in a second terminal)
-cd frontend && npm install && npm run dev        # :5173, proxies /api -> :8090
-```
-
-Or run both together from the repo root:
-
-```bash
-node scripts/dev.mjs
-```
-
-Open `http://localhost:5173`.
-
-**Demo accounts** (seeded in both the demo API and the Spring backend):
-
-| Role | Email | Password |
-|------|-------|----------|
-| User | `aarav@railgpt.app` | `Travel@123` |
-| Admin | `admin@railgpt.app` | `Admin@123` |
-
-### Option B — the real Spring Boot backend + PostgreSQL
-
-Requires **Java 17** and a reachable **PostgreSQL**. Maven is optional — the
-`./mvnw` wrapper downloads it on first run (needs Maven Central access).
+Requires **Java 17**, **Node 18+** and a reachable **PostgreSQL**. Maven is
+optional — the `./mvnw` wrapper downloads it on first run (needs Maven Central).
 
 ```bash
 # 1. Create a fresh database (never reuse the old incompatible schema).
 createdb railgpt
 
-# 2. Export configuration. Spring Boot reads ENV VARS, not a .env file, so export
-#    them (or use your process manager / IDE env). See .env.example for the list.
+# 2. Export configuration. Spring Boot reads ENV VARS (not a .env file), so export
+#    them or use your process manager / IDE env. See .env.example for the list.
 export DB_URL="jdbc:postgresql://localhost:5432/railgpt"
 export DB_USERNAME="postgres"
 export DB_PASSWORD="<your-db-password>"
@@ -97,20 +77,70 @@ export CORS_ALLOWED_ORIGINS="http://localhost:5173"
 
 # 3. Run the backend. Flyway applies migrations, Hibernate validates, then the
 #    catalog + demo accounts are seeded (empty DB only).
-./mvnw spring-boot:run          # :8081   (or: mvn spring-boot:run)
+./mvnw spring-boot:run                            # :8081
 
-# 4. Frontend, pointed at the real backend
-node scripts/dev.mjs --real
-# or: cd frontend && VITE_API_TARGET=http://localhost:8081 npm run dev
+# 4. Frontend (second terminal). Defaults to the Spring backend on :8081.
+cd frontend && npm install && npm run dev         # :5173, proxies /api -> :8081
 ```
 
-API docs: `http://localhost:8081/swagger-ui.html`. For a production profile run
-`./mvnw spring-boot:run -Dspring-boot.run.profiles=prod` (forces `ddl-auto=validate`,
-secure cookies; still no hardcoded credentials).
+Or run the frontend from the repo root (it defaults to the real backend):
+
+```bash
+node scripts/dev.mjs                              # frontend :5173 -> Spring :8081
+```
+
+Open `http://localhost:5173`. API docs: `http://localhost:8081/swagger-ui.html`.
+For a production profile: `./mvnw spring-boot:run -Dspring-boot.run.profiles=prod`
+(forces `ddl-auto=validate`, secure cookies; still no hardcoded credentials).
+
+### Option B — demo fallback (no Java/DB needed)
+
+```bash
+node scripts/dev.mjs --demo                       # demo API :8090 + frontend :5173
+# or manually:
+cd demo-api && npm install && npm start           # :8090
+cd frontend && VITE_API_TARGET=http://localhost:8090 npm run dev   # :5173
+```
+
+The UI shows a "Demo environment" banner in this mode. Demo data is **not** real
+production inventory and is never presented as live Indian Railways availability.
+
+**Seeded accounts** (created in both the demo API and the Spring backend):
+
+| Role | Email | Password |
+|------|-------|----------|
+| User | `aarav@railgpt.app` | `Travel@123` |
+| Admin | `admin@railgpt.app` | `Admin@123` |
 
 > **Schema note.** The hardened backend uses a significantly upgraded schema
 > (per-date / per-class inventory, multi-passenger bookings). Start with a **fresh
 > database**; the old single-passenger schema is not compatible.
+
+### Testing
+
+```bash
+# Frontend unit + API integration tests (mocked fetch; 40 tests)
+cd frontend && npm test
+
+# Frontend production type-check + build
+cd frontend && npm run build
+
+# Live API contract tests against a RUNNING backend using the real Zod schemas.
+# Point at Spring (:8081) or the demo (:8090):
+cd frontend && LIVE_API_URL=http://localhost:8081 npm run test:live
+
+# Backend: full Maven suite (H2 unit + real-PostgreSQL Testcontainers integration)
+./mvnw test                                       # needs Java 17 + Docker
+
+# Demo engine tests
+cd demo-api && npm test
+```
+
+CI (`.github/workflows/backend-ci.yml`) runs two jobs on every push to `main` /
+`arena/**` and on PRs: **backend** (compile + all Maven tests incl. PostgreSQL
+Testcontainers, with a guard that fails if the integration tests are skipped) and
+**fullstack** (boots the real Spring Boot jar against a PostgreSQL service
+container, then runs the frontend live contract suite + unit tests + build).
 
 ---
 
@@ -127,7 +157,8 @@ All secrets come from the environment — nothing sensitive is committed. See
 | `CORS_ALLOWED_ORIGINS` | Comma-separated allowed browser origins. |
 | `COOKIE_SECURE` | `true` when served over HTTPS. |
 | `SERVER_PORT` | Backend port (default `8081`). |
-| `VITE_API_TARGET` | Backend the frontend dev proxy targets (`:8090` demo / `:8081` real). |
+| `VITE_API_TARGET` | Backend the frontend dev proxy targets (default `:8081` Spring; set `:8090` for the demo fallback). |
+| `LIVE_API_URL` | Base URL for the frontend live contract tests (`npm run test:live`). |
 | `DEMO_PORT`, `DEMO_PERSIST`, `DEMO_JWT_SECRET` | Demo API only. |
 
 ---

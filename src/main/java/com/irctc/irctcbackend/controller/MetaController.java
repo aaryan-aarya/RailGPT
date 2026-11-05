@@ -21,7 +21,11 @@ public class MetaController {
     @GetMapping("/meta")
     public Map<String, Object> meta() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("mode", "demo");
+        // "production" = the real Spring Boot + PostgreSQL backend (persistent
+        // bookings, JWT auth). The catalog is still illustrative sample data,
+        // which the disclaimer states honestly — it is NOT a live IRCTC feed.
+        // The optional Node demo API reports mode "demo" instead.
+        m.put("mode", "production");
         m.put("name", "RailGPT API");
         m.put("version", "1.0.0");
         m.put("disclaimer", "Illustrative catalog — not a live Indian Railways integration.");

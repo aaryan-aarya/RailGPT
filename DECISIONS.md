@@ -119,6 +119,27 @@ Spring Boot 3.3+, as one deliberate upgrade rather than a warning-driven hack.
   always streams bodies and cannot read a 401 on POST. Local reproduction:
   `./mvnw test` with Java 17 + Maven Central + Docker.
 
+## Phase 2 — Frontend ↔ production backend integration
+
+- **Spring Boot is the primary backend.** The Vite proxy defaults to `:8081`; the
+  Node demo API (`:8090`) is an opt-in fallback (`--demo` / `VITE_API_TARGET`).
+  The browser only ever calls same-origin `/api/...`, so no backend URL or
+  localhost address is shipped to the client and CORS is not exercised in dev.
+- **Contract parity is tested, not assumed.** The frontend Zod schemas are the
+  source of truth; `ApiContractTest` (H2, real JWT + security), the live
+  `contract.live.test.ts` (real schemas vs a running server), and a CI `fullstack`
+  job (real Spring jar + PostgreSQL service container) all enforce it.
+- **Honest backend identification.** Spring `/meta` reports `mode:"production"`
+  (persistent + JWT) while keeping the "illustrative catalog — not live IR"
+  disclaimer, which the footer now always shows. The demo reports `mode:"demo"`
+  and the UI shows a demo banner. Demo data is never real production inventory.
+- **Demo parity fixes.** The demo engine had the same stale booking-status-after-
+  promotion bug fixed in Spring; `rebalance` now refreshes every affected
+  booking's aggregate status. The demo chatbot now validates empty/oversized
+  questions (400 VALIDATION) to match Spring's `ChatRequest` constraints.
+- **No security weakened.** All guards, ownership checks, masking and validation
+  are unchanged; the integration added tests around them, not exceptions to them.
+
 ## Known limitations / future work
 
 - Illustrative catalog, not a live IRCTC feed; no payments; no real Tatkal quota.

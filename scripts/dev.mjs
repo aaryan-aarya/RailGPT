@@ -2,21 +2,28 @@
 /**
  * RailGPT local development orchestrator.
  *
- *   node scripts/dev.mjs          -> demo API (:8090) + Vite frontend (:5173)
- *   node scripts/dev.mjs --real   -> Vite frontend only, proxied to Spring Boot (:8081)
+ *   node scripts/dev.mjs          -> Vite frontend (:5173) proxied to the PRIMARY
+ *                                    Spring Boot backend (:8081)
+ *   node scripts/dev.mjs --demo   -> optional Node demo API (:8090) + Vite (:5173)
  *
- * For --real, start the Spring Boot backend separately (mvn spring-boot:run)
- * with PostgreSQL reachable and the env vars from .env.example set.
+ * Default (real) mode: start the Spring Boot backend separately first
+ * (./mvnw spring-boot:run) with PostgreSQL reachable and the env vars from
+ * .env.example set. The frontend then talks to the production backend.
  *
- * This is for local development. In the Arena sandbox the two processes are
- * started independently via the process tools instead.
+ * --demo mode: a self-contained UI preview with illustrative in-memory data and
+ * no Java/PostgreSQL needed. Demo data is NEVER real production inventory.
+ *
+ * This is for local development. In the Arena sandbox the processes are started
+ * independently via the process tools instead.
  */
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const real = process.argv.includes('--real');
+// Spring Boot is the primary backend. --demo opts into the Node demo fallback.
+// (--real is accepted as a no-op alias for backward compatibility.)
+const demo = process.argv.includes('--demo');
 const children = [];
 let shuttingDown = false;
 
@@ -50,9 +57,9 @@ function shutdown(code) {
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
-const apiTarget = process.env.VITE_API_TARGET || (real ? 'http://localhost:8081' : 'http://localhost:8090');
+const apiTarget = process.env.VITE_API_TARGET || (demo ? 'http://localhost:8090' : 'http://localhost:8081');
 
-if (!real) {
+if (demo) {
   run('api', [path.join(root, 'demo-api', 'src', 'server.js')], {
     env: {
       DEMO_PORT: process.env.DEMO_PORT || '8090',
@@ -66,6 +73,6 @@ run('web', [path.join(root, 'frontend', 'node_modules', 'vite', 'bin', 'vite.js'
   env: { VITE_API_TARGET: apiTarget },
 });
 
-console.log(real
-  ? `RailGPT dev (real backend): frontend :5173 -> Spring Boot ${apiTarget}. Ctrl+C to stop.`
-  : 'RailGPT dev: demo API :8090 + frontend :5173. Ctrl+C to stop.');
+console.log(demo
+  ? 'RailGPT dev (DEMO fallback): demo API :8090 + frontend :5173. Illustrative data only. Ctrl+C to stop.'
+  : `RailGPT dev (PRIMARY backend): frontend :5173 -> Spring Boot ${apiTarget}. Start it with ./mvnw spring-boot:run. Ctrl+C to stop.`);

@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
 // The browser only ever talks to same-origin relative URLs (/api/...).
-// In dev/preview, Vite proxies /api to the backend. By default that is the local
-// demo API (:8090); point VITE_API_TARGET at the Spring Boot backend (:8081) to
-// run against the real thing. No localhost URLs are ever shipped to the browser.
-const API_TARGET = process.env.VITE_API_TARGET || 'http://localhost:8090';
+// In dev/preview, Vite proxies /api to the backend. The PRIMARY backend is the
+// Spring Boot API on :8081. The optional Node demo API (:8090) is a fallback for
+// previewing the UI without Java/PostgreSQL — select it with
+// VITE_API_TARGET=http://localhost:8090 (or `node scripts/dev.mjs --demo`).
+// No localhost URLs are ever shipped to the browser.
+const API_TARGET = process.env.VITE_API_TARGET || 'http://localhost:8081';
 
 export default defineConfig({
   plugins: [react()],

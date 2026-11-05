@@ -149,6 +149,14 @@ export function rebalance(db, train, journeyDate, classType) {
   passengersFor(db, train.trainNumber, journeyDate, classType)
     .filter((r) => r.pax.status === 'WL').sort(byCreated)
     .forEach((r, i) => { r.pax.waitingNumber = i + 1; r.pax.berthType = 'WL'; });
+
+  // Refresh the aggregate status of every booking touched by this rebalance so a
+  // promoted booking no longer reports a stale RAC/WL status (mirrors the Spring
+  // BookingService.refreshBookingStatuses fix).
+  const touched = new Set(passengersFor(db, train.trainNumber, journeyDate, classType).map((r) => r.booking));
+  for (const b of touched) {
+    b.status = aggregateStatus(b.passengers);
+  }
 }
 
 let paxSeq = 1;

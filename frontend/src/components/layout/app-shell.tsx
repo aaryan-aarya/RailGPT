@@ -101,7 +101,7 @@ export function AppShell() {
         <div className="border-t border-line">
           <div className="app-container flex flex-col gap-1 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} RailGPT. Built with Spring Boot &amp; React.</p>
-            <p>{isDemo ? 'Demo data — not affiliated with Indian Railways / IRCTC.' : 'Reserve responsibly.'}</p>
+            <p>{meta?.disclaimer || (isDemo ? 'Demo data — not affiliated with Indian Railways / IRCTC.' : 'Reserve responsibly.')}</p>
           </div>
         </div>
       </footer>
