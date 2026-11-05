@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --rail-ink: #0f2438;
+    --rail-brand: #12395b;
+    --rail-accent: #e08a2e;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper text-body font-sans text-base antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink font-semibold;
+  }
+  ::selection {
+    background: rgba(224, 138, 46, 0.25);
+  }
+  :focus-visible {
+    outline: 2px solid var(--rail-brand);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  input, select, textarea, button {
+    font: inherit;
+  }
+  /* Tabular numerals for all data (PNR, times, fares, seats). */
+  .tnum, table, .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .app-container {
+    @apply mx-auto w-full max-w-app px-4 sm:px-6;
+  }
+  .surface-card {
+    @apply bg-surface border border-line rounded shadow-card;
+  }
+  .field-label {
+    @apply block text-sm font-medium text-ink mb-1.5;
+  }
+  .field-input {
+    @apply w-full rounded border border-line bg-surface px-3 py-2 text-base text-ink
+      placeholder:text-muted/70 transition-colors
+      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15
+      disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted;
+  }
+  .field-error {
+    @apply mt-1 text-xs text-wl;
+  }
+  .link {
+    @apply text-brand underline-offset-2 hover:underline;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Perforated ticket edge (used on the PNR ticket component). */
+  .ticket-notch {
+    position: relative;
+  }
+  .ticket-notch::before,
+  .ticket-notch::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: var(--notch-bg, #f4f5f2);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 1px solid #e2e6e0;
+  }
+  .ticket-notch::before { left: -10px; }
+  .ticket-notch::after { right: -10px; }
+
+  .dashed-divider {
+    background-image: linear-gradient(to right, #cfd6cf 55%, rgba(255, 255, 255, 0) 0%);
+    background-position: bottom;
+    background-size: 10px 1px;
+    background-repeat: repeat-x;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden bg-line/60 rounded;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
