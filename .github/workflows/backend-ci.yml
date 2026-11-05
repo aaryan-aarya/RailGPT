@@ -1,0 +1,243 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Compile & test Spring Boot (Java 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 17 (Temurin) with Maven dependency caching
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Ensure Maven wrapper is executable
+        run: chmod +x mvnw
+
+      - name: Show toolchain (Docker is required for Testcontainers)
+        run: |
+          java -version
+          ./mvnw --version
+          docker version
+          docker info --format 'Docker server OK: {{.ServerVersion}}'
+          docker run --rm alpine:3.20 echo 'docker run OK (pull + container start work)'
+
+      - name: Compile backend (main + test sources)
+        run: ./mvnw --batch-mode --no-transfer-progress test-compile
+
+      - name: Run all tests (H2 unit tests + PostgreSQL Testcontainers integration)
+        run: ./mvnw --batch-mode --no-transfer-progress test
+
+      - name: Verify PostgreSQL integration tests actually ran (not skipped)
+        run: |
+          python3 - <<'EOF'
+          import glob, sys
+          import xml.etree.ElementTree as ET
+          files = glob.glob('target/surefire-reports/TEST-*PostgresIntegrationTest.xml')
+          if not files:
+              sys.exit('FAIL: no surefire report found for PostgresIntegrationTest')
+          root = ET.parse(files[0]).getroot()
+          tests = int(root.get('tests', 0))
+          skipped = int(root.get('skipped', 0))
+          failures = int(root.get('failures', 0))
+          errors = int(root.get('errors', 0))
+          print(f'PostgresIntegrationTest: tests={tests} skipped={skipped} failures={failures} errors={errors}')
+          if tests == 0 or skipped > 0:
+              sys.exit('FAIL: PostgreSQL integration tests were skipped; Docker/Testcontainers must run them')
+          if failures or errors:
+              sys.exit('FAIL: PostgreSQL integration tests failed')
+          EOF
+
+      - name: Test summary and failure annotations
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import glob, os
+          import xml.etree.ElementTree as ET
+
+          def esc(s):
+              return s.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+          def esc_prop(s):
+              return esc(s).replace(':', '%3A').replace(',', '%2C')
+
+          rows, failures, skips = [], [], []
+          total = passed = failed = errored = skipped = 0
+          for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
+              r = ET.parse(f).getroot()
+              name = r.get('name')
+              t = int(r.get('tests', 0)); fl = int(r.get('failures', 0))
+              er = int(r.get('errors', 0)); sk = int(r.get('skipped', 0))
+              total += t; failed += fl; errored += er; skipped += sk
+              passed += t - fl - er - sk
+              rows.append(f'{name}: tests={t} failures={fl} errors={er} skipped={sk}')
+              for tc in r.iter('testcase'):
+                  for bad in list(tc.findall('failure')) + list(tc.findall('error')):
+                      msg = (bad.get('message') or '') + '\n' + (bad.text or '')
+                      failures.append((f"{name}.{tc.get('name')}", msg.strip()[:3000]))
+                  for sk in tc.findall('skipped'):
+                      msg = (sk.get('message') or '') + '\n' + (sk.text or '')
+                      skips.append((f"{name}.{tc.get('name')}", msg.strip()[:1500]))
+
+          summary = '\n'.join(rows)
+          summary += f'\nTOTAL: tests={total} passed={passed} failed={failed} errors={errored} skipped={skipped}'
+          print(summary)
+          print(f'::notice title=Test results::{esc(summary)}')
+          for title, msg in failures[:10]:
+              print(f'::error title={esc_prop("FAILED " + title)}::{esc(msg)}')
+          if len(failures) > 10:
+              rest = '\n'.join(t for t, _ in failures[10:])
+              print(f'::error title=Additional failures ({len(failures) - 10})::{esc(rest)}')
+          seen = set()
+          for title, msg in skips:
+              key = msg[:200]
+              if key in seen:
+                  continue
+              seen.add(key)
+              print(f'::warning title={esc_prop("SKIPPED " + title)}::{esc(msg)}')
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as fh:
+              fh.write('## Backend test results\n\n```\n' + summary + '\n```\n')
+              for title, msg in failures:
+                  fh.write(f'\n### {title}\n\n```\n{msg}\n```\n')
+              if skips:
+                  fh.write('\n### Skipped tests (first of each reason)\n')
+                  seen = set()
+                  for title, msg in skips:
+                      if msg[:200] in seen:
+                          continue
+                      seen.add(msg[:200])
+                      fh.write(f'\n**{title}**\n\n```\n{msg}\n```\n')
+          EOF
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Full-stack integration: boot the REAL Spring Boot API against a REAL
+  # PostgreSQL service container, then run the frontend's live contract suite
+  # (its actual Zod schemas) plus the frontend unit tests and production build.
+  # This proves the frontend <-> production-backend contract end-to-end.
+  fullstack:
+    name: Full-stack integration (Spring Boot + PostgreSQL + frontend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: railgpt
+          # Throwaway CI-only credential for an ephemeral service container.
+          # It is NOT a production secret and grants access to nothing persistent.
+          POSTGRES_PASSWORD: railgpt_ci_ephemeral
+          POSTGRES_DB: railgpt
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U railgpt"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 17 (Temurin) with Maven dependency caching
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Set up Node 20 with npm caching
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build backend jar
+        # The complete backend test suite (incl. Testcontainers) already runs in
+        # the `backend` job; here we only package the jar to boot the server.
+        run: ./mvnw --batch-mode --no-transfer-progress package -DskipTests
+
+      - name: Start Spring Boot against the PostgreSQL service
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/railgpt
+          DB_USERNAME: railgpt
+          DB_PASSWORD: railgpt_ci_ephemeral
+          SERVER_PORT: '8081'
+          CORS_ALLOWED_ORIGINS: http://localhost:5173
+        run: |
+          # Ephemeral per-run JWT secret (>= 32 bytes); never printed or stored.
+          export JWT_SECRET="$(openssl rand -hex 32)"
+          JAR="$(ls target/*.jar | head -1)"
+          echo "Booting $JAR"
+          nohup java -jar "$JAR" > /tmp/spring.log 2>&1 &
+          echo $! > /tmp/spring.pid
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8081/health > /dev/null 2>&1; then
+              echo "Spring Boot is up after ~$((i * 2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Spring Boot failed to start; log follows:"
+          cat /tmp/spring.log
+          exit 1
+
+      - name: Live API contract tests (frontend Zod schemas vs real Spring + PostgreSQL)
+        working-directory: frontend
+        env:
+          LIVE_API_URL: http://localhost:8081
+        run: npm run test:live
+
+      - name: Frontend unit tests and production build
+        working-directory: frontend
+        run: |
+          npm test
+          npm run build
+
+      - name: Stop Spring Boot
+        if: always()
+        run: |
+          if [ -f /tmp/spring.pid ]; then kill "$(cat /tmp/spring.pid)" 2>/dev/null || true; fi
+
+      - name: Upload Spring Boot log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: spring-boot-log
+          path: /tmp/spring.log
+          if-no-files-found: warn
+          retention-days: 14

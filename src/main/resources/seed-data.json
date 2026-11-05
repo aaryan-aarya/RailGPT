@@ -1,0 +1,1609 @@
+{
+  "stations": [
+    {
+      "code": "NDLS",
+      "name": "New Delhi",
+      "city": "Delhi",
+      "state": "Delhi"
+    },
+    {
+      "code": "MMCT",
+      "name": "Mumbai Central",
+      "city": "Mumbai",
+      "state": "Maharashtra"
+    },
+    {
+      "code": "MAS",
+      "name": "Chennai Central",
+      "city": "Chennai",
+      "state": "Tamil Nadu"
+    },
+    {
+      "code": "HWH",
+      "name": "Howrah Jn",
+      "city": "Kolkata",
+      "state": "West Bengal"
+    },
+    {
+      "code": "SBC",
+      "name": "KSR Bengaluru",
+      "city": "Bengaluru",
+      "state": "Karnataka"
+    },
+    {
+      "code": "ASR",
+      "name": "Amritsar Jn",
+      "city": "Amritsar",
+      "state": "Punjab"
+    },
+    {
+      "code": "LDH",
+      "name": "Ludhiana Jn",
+      "city": "Ludhiana",
+      "state": "Punjab"
+    },
+    {
+      "code": "JRC",
+      "name": "Jalandhar Cantt",
+      "city": "Jalandhar",
+      "state": "Punjab"
+    },
+    {
+      "code": "CDG",
+      "name": "Chandigarh",
+      "city": "Chandigarh",
+      "state": "Chandigarh"
+    },
+    {
+      "code": "UMB",
+      "name": "Ambala Cantt",
+      "city": "Ambala",
+      "state": "Haryana"
+    },
+    {
+      "code": "FZR",
+      "name": "Firozpur Cantt",
+      "city": "Firozpur",
+      "state": "Punjab"
+    },
+    {
+      "code": "JAT",
+      "name": "Jammu Tawi",
+      "city": "Jammu",
+      "state": "J&K"
+    },
+    {
+      "code": "SVDK",
+      "name": "SMVD Katra",
+      "city": "Katra",
+      "state": "J&K"
+    },
+    {
+      "code": "JP",
+      "name": "Jaipur Jn",
+      "city": "Jaipur",
+      "state": "Rajasthan"
+    },
+    {
+      "code": "ADI",
+      "name": "Ahmedabad Jn",
+      "city": "Ahmedabad",
+      "state": "Gujarat"
+    },
+    {
+      "code": "PUNE",
+      "name": "Pune Jn",
+      "city": "Pune",
+      "state": "Maharashtra"
+    },
+    {
+      "code": "SC",
+      "name": "Secunderabad Jn",
+      "city": "Hyderabad",
+      "state": "Telangana"
+    },
+    {
+      "code": "BPL",
+      "name": "Bhopal Jn",
+      "city": "Bhopal",
+      "state": "Madhya Pradesh"
+    },
+    {
+      "code": "LKO",
+      "name": "Lucknow NR",
+      "city": "Lucknow",
+      "state": "Uttar Pradesh"
+    },
+    {
+      "code": "CNB",
+      "name": "Kanpur Central",
+      "city": "Kanpur",
+      "state": "Uttar Pradesh"
+    },
+    {
+      "code": "PNBE",
+      "name": "Patna Jn",
+      "city": "Patna",
+      "state": "Bihar"
+    },
+    {
+      "code": "GHY",
+      "name": "Guwahati",
+      "city": "Guwahati",
+      "state": "Assam"
+    },
+    {
+      "code": "DBRG",
+      "name": "Dibrugarh",
+      "city": "Dibrugarh",
+      "state": "Assam"
+    },
+    {
+      "code": "BSB",
+      "name": "Varanasi Jn",
+      "city": "Varanasi",
+      "state": "Uttar Pradesh"
+    },
+    {
+      "code": "PRYJ",
+      "name": "Prayagraj Jn",
+      "city": "Prayagraj",
+      "state": "Uttar Pradesh"
+    },
+    {
+      "code": "AGC",
+      "name": "Agra Cantt",
+      "city": "Agra",
+      "state": "Uttar Pradesh"
+    },
+    {
+      "code": "GWL",
+      "name": "Gwalior Jn",
+      "city": "Gwalior",
+      "state": "Madhya Pradesh"
+    },
+    {
+      "code": "NGP",
+      "name": "Nagpur Jn",
+      "city": "Nagpur",
+      "state": "Maharashtra"
+    },
+    {
+      "code": "BBS",
+      "name": "Bhubaneswar",
+      "city": "Bhubaneswar",
+      "state": "Odisha"
+    },
+    {
+      "code": "PURI",
+      "name": "Puri",
+      "city": "Puri",
+      "state": "Odisha"
+    },
+    {
+      "code": "MAO",
+      "name": "Madgaon Jn",
+      "city": "Margao",
+      "state": "Goa"
+    },
+    {
+      "code": "TVC",
+      "name": "Thiruvananthapuram",
+      "city": "Thiruvananthapuram",
+      "state": "Kerala"
+    },
+    {
+      "code": "ERS",
+      "name": "Ernakulam Jn",
+      "city": "Kochi",
+      "state": "Kerala"
+    },
+    {
+      "code": "CBE",
+      "name": "Coimbatore Jn",
+      "city": "Coimbatore",
+      "state": "Tamil Nadu"
+    },
+    {
+      "code": "MDU",
+      "name": "Madurai Jn",
+      "city": "Madurai",
+      "state": "Tamil Nadu"
+    },
+    {
+      "code": "DDN",
+      "name": "Dehradun",
+      "city": "Dehradun",
+      "state": "Uttarakhand"
+    },
+    {
+      "code": "RNC",
+      "name": "Ranchi Jn",
+      "city": "Ranchi",
+      "state": "Jharkhand"
+    },
+    {
+      "code": "VSKP",
+      "name": "Visakhapatnam",
+      "city": "Visakhapatnam",
+      "state": "Andhra Pradesh"
+    },
+    {
+      "code": "BZA",
+      "name": "Vijayawada Jn",
+      "city": "Vijayawada",
+      "state": "Andhra Pradesh"
+    },
+    {
+      "code": "TPJ",
+      "name": "Tiruchirappalli",
+      "city": "Tiruchirappalli",
+      "state": "Tamil Nadu"
+    }
+  ],
+  "trains": [
+    {
+      "trainNumber": "12903",
+      "trainName": "Golden Temple Mail",
+      "source": "Mumbai Central",
+      "destination": "Amritsar Jn",
+      "departureTime": "18:45",
+      "arrivalTime": "05:30",
+      "durationMinutes": 2085,
+      "distanceKm": 1930,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 72,
+          "fare": 715,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1885,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2710,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4590,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12904",
+      "trainName": "Golden Temple Mail",
+      "source": "Amritsar Jn",
+      "destination": "Mumbai Central",
+      "departureTime": "05:00",
+      "arrivalTime": "05:25",
+      "durationMinutes": 1465,
+      "distanceKm": 1930,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 72,
+          "fare": 715,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1885,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2710,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4590,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12497",
+      "trainName": "Shan-e-Punjab",
+      "source": "New Delhi",
+      "destination": "Amritsar Jn",
+      "departureTime": "06:40",
+      "arrivalTime": "13:10",
+      "durationMinutes": 390,
+      "distanceKm": 448,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 305,
+          "racLimit": 20,
+          "waitingLimit": 44
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 810,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 1160,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 620,
+          "racLimit": 18,
+          "waitingLimit": 40
+        }
+      ]
+    },
+    {
+      "trainNumber": "12498",
+      "trainName": "Shan-e-Punjab",
+      "source": "Amritsar Jn",
+      "destination": "New Delhi",
+      "departureTime": "15:20",
+      "arrivalTime": "22:05",
+      "durationMinutes": 405,
+      "distanceKm": 448,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 305,
+          "racLimit": 20,
+          "waitingLimit": 44
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 810,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 1160,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 620,
+          "racLimit": 18,
+          "waitingLimit": 40
+        }
+      ]
+    },
+    {
+      "trainNumber": "12013",
+      "trainName": "Amritsar Shatabdi",
+      "source": "New Delhi",
+      "destination": "Amritsar Jn",
+      "departureTime": "07:20",
+      "arrivalTime": "13:00",
+      "durationMinutes": 340,
+      "distanceKm": 448,
+      "trainType": "Shatabdi",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 905,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "EC",
+          "totalSeats": 56,
+          "fare": 1780,
+          "racLimit": 10,
+          "waitingLimit": 22
+        }
+      ]
+    },
+    {
+      "trainNumber": "12014",
+      "trainName": "Amritsar Shatabdi",
+      "source": "Amritsar Jn",
+      "destination": "New Delhi",
+      "departureTime": "16:30",
+      "arrivalTime": "22:10",
+      "durationMinutes": 340,
+      "distanceKm": 448,
+      "trainType": "Shatabdi",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 905,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "EC",
+          "totalSeats": 56,
+          "fare": 1780,
+          "racLimit": 10,
+          "waitingLimit": 22
+        }
+      ]
+    },
+    {
+      "trainNumber": "12411",
+      "trainName": "Chandigarh Intercity",
+      "source": "Amritsar Jn",
+      "destination": "Chandigarh",
+      "departureTime": "06:00",
+      "arrivalTime": "10:05",
+      "durationMinutes": 245,
+      "distanceKm": 253,
+      "trainType": "Intercity",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 465,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "2S",
+          "totalSeats": 108,
+          "fare": 165,
+          "racLimit": 24,
+          "waitingLimit": 50
+        }
+      ]
+    },
+    {
+      "trainNumber": "12412",
+      "trainName": "Chandigarh Intercity",
+      "source": "Chandigarh",
+      "destination": "Amritsar Jn",
+      "departureTime": "17:00",
+      "arrivalTime": "21:05",
+      "durationMinutes": 245,
+      "distanceKm": 253,
+      "trainType": "Intercity",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 465,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "2S",
+          "totalSeats": 108,
+          "fare": 165,
+          "racLimit": 24,
+          "waitingLimit": 50
+        }
+      ]
+    },
+    {
+      "trainNumber": "14673",
+      "trainName": "Shaheed Express",
+      "source": "Ludhiana Jn",
+      "destination": "New Delhi",
+      "departureTime": "05:10",
+      "arrivalTime": "11:45",
+      "durationMinutes": 395,
+      "distanceKm": 340,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 80,
+          "fare": 265,
+          "racLimit": 20,
+          "waitingLimit": 44
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 705,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 1010,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "2S",
+          "totalSeats": 108,
+          "fare": 140,
+          "racLimit": 24,
+          "waitingLimit": 50
+        }
+      ]
+    },
+    {
+      "trainNumber": "14674",
+      "trainName": "Shaheed Express",
+      "source": "New Delhi",
+      "destination": "Ludhiana Jn",
+      "departureTime": "18:30",
+      "arrivalTime": "01:05",
+      "durationMinutes": 395,
+      "distanceKm": 340,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 80,
+          "fare": 265,
+          "racLimit": 20,
+          "waitingLimit": 44
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 705,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 1010,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "2S",
+          "totalSeats": 108,
+          "fare": 140,
+          "racLimit": 24,
+          "waitingLimit": 50
+        }
+      ]
+    },
+    {
+      "trainNumber": "12951",
+      "trainName": "Mumbai Rajdhani",
+      "source": "Mumbai Central",
+      "destination": "New Delhi",
+      "departureTime": "17:00",
+      "arrivalTime": "08:35",
+      "durationMinutes": 935,
+      "distanceKm": 1384,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2615,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3740,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 6320,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12952",
+      "trainName": "Mumbai Rajdhani",
+      "source": "New Delhi",
+      "destination": "Mumbai Central",
+      "departureTime": "16:55",
+      "arrivalTime": "08:15",
+      "durationMinutes": 920,
+      "distanceKm": 1384,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2615,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3740,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 6320,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12953",
+      "trainName": "August Kranti Rajdhani",
+      "source": "Mumbai Central",
+      "destination": "Hazrat Nizamuddin",
+      "departureTime": "17:40",
+      "arrivalTime": "10:55",
+      "durationMinutes": 1035,
+      "distanceKm": 1377,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2495,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3560,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 6010,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12909",
+      "trainName": "Garib Rath",
+      "source": "Mumbai Central",
+      "destination": "Hazrat Nizamuddin",
+      "departureTime": "15:35",
+      "arrivalTime": "09:25",
+      "durationMinutes": 1070,
+      "distanceKm": 1377,
+      "trainType": "Garib Rath",
+      "daysOfRun": [
+        "Mon",
+        "Wed",
+        "Sat"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 78,
+          "fare": 1215,
+          "racLimit": 20,
+          "waitingLimit": 44
+        },
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 830,
+          "racLimit": 18,
+          "waitingLimit": 40
+        }
+      ]
+    },
+    {
+      "trainNumber": "12621",
+      "trainName": "Tamil Nadu Express",
+      "source": "Chennai Central",
+      "destination": "New Delhi",
+      "departureTime": "22:00",
+      "arrivalTime": "07:10",
+      "durationMinutes": 1990,
+      "distanceKm": 2180,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 785,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2065,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2960,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 5010,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12622",
+      "trainName": "Tamil Nadu Express",
+      "source": "New Delhi",
+      "destination": "Chennai Central",
+      "departureTime": "22:30",
+      "arrivalTime": "07:40",
+      "durationMinutes": 1990,
+      "distanceKm": 2180,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 785,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2065,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2960,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 5010,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12627",
+      "trainName": "Karnataka Express",
+      "source": "KSR Bengaluru",
+      "destination": "New Delhi",
+      "departureTime": "19:20",
+      "arrivalTime": "06:40",
+      "durationMinutes": 2120,
+      "distanceKm": 2365,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 825,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2175,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3115,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 5275,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12628",
+      "trainName": "Karnataka Express",
+      "source": "New Delhi",
+      "destination": "KSR Bengaluru",
+      "departureTime": "20:45",
+      "arrivalTime": "08:10",
+      "durationMinutes": 2125,
+      "distanceKm": 2365,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 825,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2175,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3115,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 5275,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12841",
+      "trainName": "Coromandel Express",
+      "source": "Howrah Jn",
+      "destination": "Chennai Central",
+      "departureTime": "14:50",
+      "arrivalTime": "16:50",
+      "durationMinutes": 1560,
+      "distanceKm": 1662,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 665,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1755,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2515,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4265,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12842",
+      "trainName": "Coromandel Express",
+      "source": "Chennai Central",
+      "destination": "Howrah Jn",
+      "departureTime": "08:45",
+      "arrivalTime": "11:05",
+      "durationMinutes": 1580,
+      "distanceKm": 1662,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 665,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1755,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2515,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4265,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12301",
+      "trainName": "Howrah Rajdhani",
+      "source": "Howrah Jn",
+      "destination": "New Delhi",
+      "departureTime": "16:50",
+      "arrivalTime": "10:05",
+      "durationMinutes": 1035,
+      "distanceKm": 1447,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2705,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3870,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 6545,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12302",
+      "trainName": "Howrah Rajdhani",
+      "source": "New Delhi",
+      "destination": "Howrah Jn",
+      "departureTime": "16:50",
+      "arrivalTime": "10:00",
+      "durationMinutes": 1030,
+      "distanceKm": 1447,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2705,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 3870,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 6545,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12423",
+      "trainName": "Dibrugarh Rajdhani",
+      "source": "New Delhi",
+      "destination": "Dibrugarh",
+      "departureTime": "20:50",
+      "arrivalTime": "05:40",
+      "durationMinutes": 2690,
+      "distanceKm": 2452,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 3235,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 4625,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 7830,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12424",
+      "trainName": "Dibrugarh Rajdhani",
+      "source": "Dibrugarh",
+      "destination": "New Delhi",
+      "departureTime": "20:35",
+      "arrivalTime": "06:00",
+      "durationMinutes": 2605,
+      "distanceKm": 2452,
+      "trainType": "Rajdhani",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 3235,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 4625,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 7830,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12002",
+      "trainName": "Bhopal Shatabdi",
+      "source": "New Delhi",
+      "destination": "Bhopal Jn",
+      "departureTime": "06:00",
+      "arrivalTime": "14:40",
+      "durationMinutes": 520,
+      "distanceKm": 707,
+      "trainType": "Shatabdi",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 1255,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "EC",
+          "totalSeats": 56,
+          "fare": 2460,
+          "racLimit": 10,
+          "waitingLimit": 22
+        }
+      ]
+    },
+    {
+      "trainNumber": "12001",
+      "trainName": "Bhopal Shatabdi",
+      "source": "Bhopal Jn",
+      "destination": "New Delhi",
+      "departureTime": "14:40",
+      "arrivalTime": "23:20",
+      "durationMinutes": 520,
+      "distanceKm": 707,
+      "trainType": "Shatabdi",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "CC",
+          "totalSeats": 78,
+          "fare": 1255,
+          "racLimit": 18,
+          "waitingLimit": 40
+        },
+        {
+          "classType": "EC",
+          "totalSeats": 56,
+          "fare": 2460,
+          "racLimit": 10,
+          "waitingLimit": 22
+        }
+      ]
+    },
+    {
+      "trainNumber": "12137",
+      "trainName": "Punjab Mail",
+      "source": "Mumbai Central",
+      "destination": "Firozpur Cantt",
+      "departureTime": "19:35",
+      "arrivalTime": "05:50",
+      "durationMinutes": 1815,
+      "distanceKm": 1707,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 625,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1650,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2365,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4005,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12138",
+      "trainName": "Punjab Mail",
+      "source": "Firozpur Cantt",
+      "destination": "Mumbai Central",
+      "departureTime": "21:45",
+      "arrivalTime": "08:05",
+      "durationMinutes": 1820,
+      "distanceKm": 1707,
+      "trainType": "Mail/Express",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 625,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1650,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2365,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4005,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12615",
+      "trainName": "Grand Trunk Express",
+      "source": "Chennai Central",
+      "destination": "New Delhi",
+      "departureTime": "19:15",
+      "arrivalTime": "06:30",
+      "durationMinutes": 2235,
+      "distanceKm": 2180,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 780,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 2055,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2945,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4985,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    },
+    {
+      "trainNumber": "12723",
+      "trainName": "Telangana Express",
+      "source": "Hyderabad Deccan",
+      "destination": "New Delhi",
+      "departureTime": "06:25",
+      "arrivalTime": "05:55",
+      "durationMinutes": 1410,
+      "distanceKm": 1661,
+      "trainType": "Superfast",
+      "daysOfRun": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "classes": [
+        {
+          "classType": "SL",
+          "totalSeats": 96,
+          "fare": 645,
+          "racLimit": 22,
+          "waitingLimit": 48
+        },
+        {
+          "classType": "3A",
+          "totalSeats": 64,
+          "fare": 1705,
+          "racLimit": 16,
+          "waitingLimit": 36
+        },
+        {
+          "classType": "2A",
+          "totalSeats": 48,
+          "fare": 2445,
+          "racLimit": 12,
+          "waitingLimit": 28
+        },
+        {
+          "classType": "1A",
+          "totalSeats": 24,
+          "fare": 4140,
+          "racLimit": 8,
+          "waitingLimit": 18
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "name": "Aarav Mehta",
+      "email": "aarav@railgpt.app",
+      "password": "Travel@123",
+      "role": "USER",
+      "phone": "+91 98150 12345"
+    },
+    {
+      "name": "RailGPT Admin",
+      "email": "admin@railgpt.app",
+      "password": "Admin@123",
+      "role": "ADMIN",
+      "phone": "+91 98000 00000"
+    }
+  ]
+}

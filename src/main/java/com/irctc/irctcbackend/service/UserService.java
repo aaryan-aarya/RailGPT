@@ -1,84 +1,75 @@
 package com.irctc.irctcbackend.service;
 
-import com.irctc.irctcbackend.config.JwtUtil;
+import com.irctc.irctcbackend.dto.ChangePasswordRequest;
+import com.irctc.irctcbackend.dto.ProfileUpdateRequest;
+import com.irctc.irctcbackend.dto.RegisterRequest;
 import com.irctc.irctcbackend.entity.User;
+import com.irctc.irctcbackend.exception.ApiException;
 import com.irctc.irctcbackend.repository.UserRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
-    @Autowired private JwtUtil jwtUtil;
 
-
-    // ✅ REGISTER
-    // ✅ REGISTER
-    public User registerUser(User user) {
-
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+    @Transactional
+    public User register(RegisterRequest request) {
+        String email = request.email().trim().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
+            throw ApiException.conflict("EMAIL_EXISTS", "An account with this email already exists.");
         }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
+        User user = User.builder()
+                .name(request.name().trim())
+                .email(email)
+                .password(passwordEncoder.encode(request.password()))
+                .role("USER") // never trust a client-supplied role
+                .phone(request.phone())
+                .build();
         return userRepository.save(user);
     }
 
-    // ✅ GENERATE TOKEN
-    public String generateToken(String email) {
-        return jwtUtil.generateToken(email);
-    }
-    // ✅ LOGIN
-
-    public String loginUser(String email, String password) {
-
-        Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("User not found");
-        }
-
-        User user = userOpt.get();
-
+    /** Enumeration-safe: identical error for unknown email and wrong password. */
+    public User authenticate(String email, String password) {
+        User user = userRepository.findByEmail(email == null ? "" : email.trim().toLowerCase())
+                .orElseThrow(() -> ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password."));
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid Password");
+            throw ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password.");
         }
-
-        return jwtUtil.generateToken(email);
+        return user;
     }
-    // ✅ CREATE
-    public User saveUser(User user) {
+
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User not found."));
+    }
+
+    @Transactional
+    public User updateProfile(String email, ProfileUpdateRequest request) {
+        User user = getByEmail(email);
+        if (request.name() != null && !request.name().isBlank()) {
+            user.setName(request.name().trim());
+        }
+        if (request.phone() != null) {
+            user.setPhone(request.phone().isBlank() ? null : request.phone().trim());
+        }
         return userRepository.save(user);
     }
 
-    // ✅ GET ALL
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    // ✅ GET BY ID
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    // ✅ UPDATE
-    public User updateUser(Long id, User user) {
-        user.setId(id);
-        return userRepository.save(user);
-    }
-
-    // ✅ DELETE
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    @Transactional
+    public void changePassword(String email, ChangePasswordRequest request) {
+        User user = getByEmail(email);
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw ApiException.badRequest("VALIDATION", "Current password is incorrect.");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 }

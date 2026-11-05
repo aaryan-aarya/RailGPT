@@ -1,66 +1,75 @@
 package com.irctc.irctcbackend.controller;
 
-import java.time.Duration;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.irctc.irctcbackend.config.JwtUtil;
+import com.irctc.irctcbackend.dto.AuthResponse;
+import com.irctc.irctcbackend.dto.LoginRequest;
+import com.irctc.irctcbackend.dto.RegisterRequest;
 import com.irctc.irctcbackend.entity.User;
 import com.irctc.irctcbackend.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private UserService userService;
+    @Autowired private UserService userService;
+    @Autowired private JwtUtil jwtUtil;
 
+    @Value("${railgpt.cookie.secure:false}")
+    private boolean cookieSecure;
 
-    // REGISTER API
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-
-        User registeredUser = userService.registerUser(user);
-
-        String token = userService.generateToken(
-                registeredUser.getEmail()
-        );
-
-        ResponseCookie cookie = ResponseCookie.from("token", token)
-                .httpOnly(true)
-                .secure(false) // true in production with HTTPS
-                .path("/")
-                .maxAge(Duration.ofHours(24))
-                .sameSite("Lax")
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(registeredUser);
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+        User user = userService.register(request);
+        return issueSession(user, response, HttpStatus.CREATED);
     }
 
-    // LOGIN API
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        User user = userService.authenticate(request.email(), request.password());
+        return issueSession(user, response, HttpStatus.OK);
+    }
 
-        String token = userService.loginUser(
-                user.getEmail(),
-                user.getPassword()
-        );
+    @GetMapping("/me")
+    public ResponseEntity<Map<String, User>> me(Authentication authentication) {
+        User user = userService.getByEmail(authentication.getName());
+        return ResponseEntity.ok(Map.of("user", user));
+    }
 
-        ResponseCookie cookie = ResponseCookie.from("token", token)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(Duration.ofHours(24))
-                .sameSite("Lax")
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Boolean>> logout(HttpServletResponse response) {
+        ResponseCookie cookie = baseCookie("").maxAge(Duration.ZERO).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    private ResponseEntity<AuthResponse> issueSession(User user, HttpServletResponse response, HttpStatus status) {
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        ResponseCookie cookie = baseCookie(token)
+                .maxAge(Duration.ofMillis(jwtUtil.getExpirationMs()))
                 .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        AuthResponse body = new AuthResponse(token, jwtUtil.getExpirationMs() / 1000, user);
+        return ResponseEntity.status(status).body(body);
+    }
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Login successful");
+    private ResponseCookie.ResponseCookieBuilder baseCookie(String value) {
+        return ResponseCookie.from("token", value)
+                .httpOnly(true)
+                .path("/")
+                .sameSite("Lax")
+                .secure(cookieSecure);
     }
 }

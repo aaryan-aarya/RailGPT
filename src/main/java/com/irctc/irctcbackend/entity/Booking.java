@@ -1,172 +1,77 @@
 package com.irctc.irctcbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "bookings")
+@Table(name = "bookings", indexes = {
+        @Index(name = "idx_bookings_pnr", columnList = "pnr", unique = true),
+        @Index(name = "idx_bookings_user", columnList = "userEmail"),
+        @Index(name = "idx_bookings_train_date_class", columnList = "trainNumber,journeyDate,classType")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true, length = 10)
     private String pnr;
 
-    private String passengerName;
-
-    private Integer age;
-
-    private String gender;
-
-    private String userEmail;
-
+    @Column(nullable = false)
     private String trainNumber;
 
-    private String source;
+    @Column(nullable = false)
+    private String trainName;
 
-    private String destination;
+    @Column(nullable = false)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String userEmail;
 
-    private String status;
+    /** ISO date YYYY-MM-DD. */
+    @Column(nullable = false)
+    private String journeyDate;
 
+    @Column(nullable = false)
     private String classType;
 
-    private String coachNumber;
+    private String boarding;
+    private String reservation;
 
-    private Integer seatNumber;
+    @Column(nullable = false)
+    private String source;
 
-    private String berthType;
+    @Column(nullable = false)
+    private String destination;
 
-    private Integer racNumber;
+    @Column(nullable = false)
+    private String status;
 
-    private Integer waitingNumber;
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer totalFare = 0;
 
-    // GETTERS AND SETTERS
+    @Builder.Default
+    @Column(nullable = false)
+    private Long createdAt = System.currentTimeMillis();
 
-    public Long getId() {
-        return id;
-    }
+    private Long cancelledAt;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Builder.Default
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<Passenger> passengers = new ArrayList<>();
 
-    public String getPnr() {
-        return pnr;
-    }
-
-    public void setPnr(String pnr) {
-        this.pnr = pnr;
-    }
-
-    public String getPassengerName() {
-        return passengerName;
-    }
-
-    public void setPassengerName(String passengerName) {
-        this.passengerName = passengerName;
-    }
-
-    public Integer getAge() {
-        return age;
-    }
-
-    public void setAge(Integer age) {
-        this.age = age;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
-
-    public String getTrainNumber() {
-        return trainNumber;
-    }
-
-    public void setTrainNumber(String trainNumber) {
-        this.trainNumber = trainNumber;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getClassType() {
-        return classType;
-    }
-
-    public void setClassType(String classType) {
-        this.classType = classType;
-    }
-
-    public String getCoachNumber() {
-        return coachNumber;
-    }
-
-    public void setCoachNumber(String coachNumber) {
-        this.coachNumber = coachNumber;
-    }
-
-    public Integer getSeatNumber() {
-        return seatNumber;
-    }
-
-    public void setSeatNumber(Integer seatNumber) {
-        this.seatNumber = seatNumber;
-    }
-
-    public String getBerthType() {
-        return berthType;
-    }
-
-    public void setBerthType(String berthType) {
-        this.berthType = berthType;
-    }
-
-    public Integer getRacNumber() {
-        return racNumber;
-    }
-
-    public void setRacNumber(Integer racNumber) {
-        this.racNumber = racNumber;
-    }
-
-    public Integer getWaitingNumber() {
-        return waitingNumber;
-    }
-
-    public void setWaitingNumber(Integer waitingNumber) {
-        this.waitingNumber = waitingNumber;
+    public void addPassenger(Passenger p) {
+        passengers.add(p);
+        p.setBooking(this);
     }
 }
