@@ -1,0 +1,93 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Compile & test Spring Boot (Java 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17 (Temurin) with Maven dependency caching
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Ensure Maven wrapper is executable
+        run: chmod +x mvnw
+
+      - name: Show toolchain (Docker is required for Testcontainers)
+        run: |
+          java -version
+          ./mvnw --version
+          docker version
+          docker info --format 'Docker server OK: {{.ServerVersion}}'
+
+      - name: Compile backend (main + test sources)
+        run: ./mvnw --batch-mode --no-transfer-progress test-compile
+
+      - name: Run all tests (H2 unit tests + PostgreSQL Testcontainers integration)
+        run: ./mvnw --batch-mode --no-transfer-progress test
+
+      - name: Verify PostgreSQL integration tests actually ran (not skipped)
+        run: |
+          python3 - <<'EOF'
+          import glob, sys
+          import xml.etree.ElementTree as ET
+          files = glob.glob('target/surefire-reports/TEST-*PostgresIntegrationTest.xml')
+          if not files:
+              sys.exit('FAIL: no surefire report found for PostgresIntegrationTest')
+          root = ET.parse(files[0]).getroot()
+          tests = int(root.get('tests', 0))
+          skipped = int(root.get('skipped', 0))
+          failures = int(root.get('failures', 0))
+          errors = int(root.get('errors', 0))
+          print(f'PostgresIntegrationTest: tests={tests} skipped={skipped} failures={failures} errors={errors}')
+          if tests == 0 or skipped > 0:
+              sys.exit('FAIL: PostgreSQL integration tests were skipped; Docker/Testcontainers must run them')
+          if failures or errors:
+              sys.exit('FAIL: PostgreSQL integration tests failed')
+          EOF
+
+      - name: Test summary
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import glob
+          import xml.etree.ElementTree as ET
+          total = passed = failed = errored = skipped = 0
+          for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
+              r = ET.parse(f).getroot()
+              t = int(r.get('tests', 0)); fl = int(r.get('failures', 0))
+              er = int(r.get('errors', 0)); sk = int(r.get('skipped', 0))
+              total += t; failed += fl; errored += er; skipped += sk
+              passed += t - fl - er - sk
+              print(f"{r.get('name')}: tests={t} failures={fl} errors={er} skipped={sk}")
+          print(f'TOTAL: tests={total} passed={passed} failed={failed} errors={errored} skipped={skipped}')
+          EOF
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
