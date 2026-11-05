@@ -85,6 +85,17 @@ the hardened schema is a breaking change from the original single-passenger mode
 a fresh database is required; an old incompatible database makes Flyway fail loudly
 on the first `CREATE TABLE` (safer than silent data loss).
 
+**Flyway version vs PostgreSQL 16 warning.** CI logs an informational notice that
+Flyway 9.22.3 has only tested PostgreSQL up to 15. We deliberately keep 9.22.3:
+it is the version Spring Boot 3.2.5 manages and the **final 9.x release** (no
+9.22.4 exists), so there is no minor/patch upgrade that adds tested PG 16 support.
+The only fix is Flyway 10.x — a major upgrade that splits PostgreSQL support into
+a separate `flyway-database-postgresql` artifact and is the combination Boot 3.3+
+(not 3.2.x) ships and tests. The warning is benign here: all 7 PostgreSQL 16
+integration tests pass (migration applied, history recorded, Hibernate validation
+OK, full booking/auth flows). Revisit Flyway 10 when the project upgrades to
+Spring Boot 3.3+, as one deliberate upgrade rather than a warning-driven hack.
+
 ## Verification honesty
 
 - Demo API engine: **16/16 tests pass**.

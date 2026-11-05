@@ -56,8 +56,14 @@
         </dependency>
 
         <!-- Flyway database migrations (owns the schema; Hibernate validates).
-             Spring Boot 3.2.x manages Flyway 9.x, whose core artifact includes
-             PostgreSQL support. -->
+             Spring Boot 3.2.5 manages Flyway 9.22.3, whose core artifact includes
+             PostgreSQL support. 9.22.3 is the final 9.x release; it logs an
+             informational "PostgreSQL 16 newer than tested 15" notice, which is
+             benign (the PG 16 integration suite passes). Tested PG 16 support
+             only exists in Flyway 10.x — a major upgrade with a separate
+             flyway-database-postgresql artifact, shipped/tested by Boot 3.3+.
+             Keep 9.22.3 until a deliberate Spring Boot 3.3+ upgrade. See
+             DECISIONS.md ("Flyway version vs PostgreSQL 16 warning"). -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
