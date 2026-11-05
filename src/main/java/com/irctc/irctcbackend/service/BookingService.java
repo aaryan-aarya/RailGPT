@@ -10,7 +10,6 @@ import com.irctc.irctcbackend.exception.ApiException;
 import com.irctc.irctcbackend.repository.BookingRepository;
 import com.irctc.irctcbackend.repository.PassengerRepository;
 import com.irctc.irctcbackend.repository.TrainRepository;
-import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +25,6 @@ public class BookingService {
     @Autowired private BookingRepository bookingRepository;
     @Autowired private TrainRepository trainRepository;
     @Autowired private PassengerRepository passengerRepository;
-    @Autowired private EntityManager entityManager;
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int MAX_ADVANCE_DAYS = 120;
@@ -122,7 +120,7 @@ public class BookingService {
 
         // Idempotent rebalance: promote RAC->CONFIRMED / WL->RAC and renumber queues.
         rebalance(rows, cls);
-        booking.setStatus(aggregateStatus(booking.getPassengers()));
+        refreshBookingStatuses(rows);
         return bookingRepository.save(booking);
     }
 
@@ -164,6 +162,9 @@ public class BookingService {
         List<Passenger> rows = passengerRepository.findForInventory(
                 train.getTrainNumber(), booking.getJourneyDate(), booking.getClassType());
         rebalance(rows, cls);
+        // Promotions change other bookings too — recompute every affected PNR's
+        // aggregate status so promoted bookings no longer report stale RAC/WL.
+        refreshBookingStatuses(rows);
 
         return bookingRepository.save(booking);
     }
@@ -177,14 +178,42 @@ public class BookingService {
         if (canSee) {
             return booking;
         }
-        // Public view: mask passenger names and hide the owner's email. Detach first
-        // so masking is never persisted back to the database.
-        entityManager.detach(booking);
-        booking.setUserEmail(null);
+        // Public view: mask passenger names and hide the owner's email. Build a
+        // transient copy so no managed entity is ever mutated (mutating detached
+        // children can still auto-flush masked data within an open transaction).
+        Booking view = Booking.builder()
+                .id(booking.getId())
+                .pnr(booking.getPnr())
+                .trainNumber(booking.getTrainNumber())
+                .trainName(booking.getTrainName())
+                .userEmail(null)
+                .journeyDate(booking.getJourneyDate())
+                .classType(booking.getClassType())
+                .boarding(booking.getBoarding())
+                .reservation(booking.getReservation())
+                .source(booking.getSource())
+                .destination(booking.getDestination())
+                .status(booking.getStatus())
+                .totalFare(booking.getTotalFare())
+                .createdAt(booking.getCreatedAt())
+                .cancelledAt(booking.getCancelledAt())
+                .build();
         for (Passenger p : booking.getPassengers()) {
-            p.setName(maskName(p.getName()));
+            view.addPassenger(Passenger.builder()
+                    .id(p.getId())
+                    .name(maskName(p.getName()))
+                    .age(p.getAge())
+                    .gender(p.getGender())
+                    .berthPreference(p.getBerthPreference())
+                    .status(p.getStatus())
+                    .seatNumber(p.getSeatNumber())
+                    .coachNumber(p.getCoachNumber())
+                    .berthType(p.getBerthType())
+                    .racNumber(p.getRacNumber())
+                    .waitingNumber(p.getWaitingNumber())
+                    .build());
         }
-        return booking;
+        return view;
     }
 
     public List<Booking> getMyBookings(String userEmail) {
@@ -260,6 +289,17 @@ public class BookingService {
         return Comparator
                 .comparingLong((Passenger p) -> p.getBooking().getCreatedAt())
                 .thenComparingLong(p -> p.getId() == null ? Long.MAX_VALUE : p.getId());
+    }
+
+    /** Recompute the aggregate status of every booking touched by the working set. */
+    private void refreshBookingStatuses(List<Passenger> rows) {
+        Set<Booking> affected = new LinkedHashSet<>();
+        for (Passenger p : rows) {
+            if (p.getBooking() != null) affected.add(p.getBooking());
+        }
+        for (Booking b : affected) {
+            b.setStatus(aggregateStatus(b.getPassengers()));
+        }
     }
 
     private String aggregateStatus(List<Passenger> passengers) {

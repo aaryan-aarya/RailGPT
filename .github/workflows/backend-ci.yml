@@ -39,6 +39,7 @@ jobs:
           ./mvnw --version
           docker version
           docker info --format 'Docker server OK: {{.ServerVersion}}'
+          docker run --rm alpine:3.20 echo 'docker run OK (pull + container start work)'
 
       - name: Compile backend (main + test sources)
         run: ./mvnw --batch-mode --no-transfer-progress test-compile
@@ -79,7 +80,7 @@ jobs:
           def esc_prop(s):
               return esc(s).replace(':', '%3A').replace(',', '%2C')
 
-          rows, failures = [], []
+          rows, failures, skips = [], [], []
           total = passed = failed = errored = skipped = 0
           for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
               r = ET.parse(f).getroot()
@@ -93,6 +94,9 @@ jobs:
                   for bad in list(tc.findall('failure')) + list(tc.findall('error')):
                       msg = (bad.get('message') or '') + '\n' + (bad.text or '')
                       failures.append((f"{name}.{tc.get('name')}", msg.strip()[:3000]))
+                  for sk in tc.findall('skipped'):
+                      msg = (sk.get('message') or '') + '\n' + (sk.text or '')
+                      skips.append((f"{name}.{tc.get('name')}", msg.strip()[:1500]))
 
           summary = '\n'.join(rows)
           summary += f'\nTOTAL: tests={total} passed={passed} failed={failed} errors={errored} skipped={skipped}'
@@ -103,11 +107,26 @@ jobs:
           if len(failures) > 10:
               rest = '\n'.join(t for t, _ in failures[10:])
               print(f'::error title=Additional failures ({len(failures) - 10})::{esc(rest)}')
+          seen = set()
+          for title, msg in skips:
+              key = msg[:200]
+              if key in seen:
+                  continue
+              seen.add(key)
+              print(f'::warning title={esc_prop("SKIPPED " + title)}::{esc(msg)}')
 
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as fh:
               fh.write('## Backend test results\n\n```\n' + summary + '\n```\n')
               for title, msg in failures:
                   fh.write(f'\n### {title}\n\n```\n{msg}\n```\n')
+              if skips:
+                  fh.write('\n### Skipped tests (first of each reason)\n')
+                  seen = set()
+                  for title, msg in skips:
+                      if msg[:200] in seen:
+                          continue
+                      seen.add(msg[:200])
+                      fh.write(f'\n**{title}**\n\n```\n{msg}\n```\n')
           EOF
 
       - name: Upload test reports

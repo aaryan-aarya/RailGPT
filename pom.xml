@@ -22,6 +22,11 @@
         <java.version>17</java.version>
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
+        <!-- Override Boot 3.2.5's Testcontainers 1.19.7: its docker-java client
+             fails Docker discovery on current GitHub runner engines, which made
+             the PostgreSQL integration tests silently skip. 1.21.4 is the latest
+             1.x line and stays API-compatible with spring-boot-testcontainers. -->
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencies>

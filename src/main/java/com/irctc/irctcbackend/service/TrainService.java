@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,9 @@ public class TrainService {
                 .durationMinutes(input.durationMinutes())
                 .distanceKm(input.distanceKm())
                 .trainType(input.trainType())
-                .daysOfRun(input.daysOfRun() == null ? List.of() : input.daysOfRun())
+                // Copy into a mutable list: Hibernate merge calls clear() on the
+                // target collection, which fails on immutable List.of(...) inputs.
+                .daysOfRun(input.daysOfRun() == null ? new ArrayList<>() : new ArrayList<>(input.daysOfRun()))
                 .build();
         applyClasses(train, input.classes());
         return trainRepository.save(train);
@@ -126,7 +129,12 @@ public class TrainService {
         train.setDurationMinutes(input.durationMinutes());
         train.setDistanceKm(input.distanceKm());
         train.setTrainType(input.trainType());
-        if (input.daysOfRun() != null) train.setDaysOfRun(input.daysOfRun());
+        if (input.daysOfRun() != null) {
+            // Mutate the managed collection in place; replacing it with an
+            // immutable DTO list breaks Hibernate's merge (clear() -> UOE).
+            train.getDaysOfRun().clear();
+            train.getDaysOfRun().addAll(input.daysOfRun());
+        }
         train.replaceClasses(null);
         applyClasses(train, input.classes());
         return trainRepository.save(train);
