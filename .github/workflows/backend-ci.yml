@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java 17 (Temurin) with Maven dependency caching
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -66,26 +66,53 @@ jobs:
               sys.exit('FAIL: PostgreSQL integration tests failed')
           EOF
 
-      - name: Test summary
+      - name: Test summary and failure annotations
         if: always()
         run: |
           python3 - <<'EOF'
-          import glob
+          import glob, os
           import xml.etree.ElementTree as ET
+
+          def esc(s):
+              return s.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+
+          def esc_prop(s):
+              return esc(s).replace(':', '%3A').replace(',', '%2C')
+
+          rows, failures = [], []
           total = passed = failed = errored = skipped = 0
           for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
               r = ET.parse(f).getroot()
+              name = r.get('name')
               t = int(r.get('tests', 0)); fl = int(r.get('failures', 0))
               er = int(r.get('errors', 0)); sk = int(r.get('skipped', 0))
               total += t; failed += fl; errored += er; skipped += sk
               passed += t - fl - er - sk
-              print(f"{r.get('name')}: tests={t} failures={fl} errors={er} skipped={sk}")
-          print(f'TOTAL: tests={total} passed={passed} failed={failed} errors={errored} skipped={skipped}')
+              rows.append(f'{name}: tests={t} failures={fl} errors={er} skipped={sk}')
+              for tc in r.iter('testcase'):
+                  for bad in list(tc.findall('failure')) + list(tc.findall('error')):
+                      msg = (bad.get('message') or '') + '\n' + (bad.text or '')
+                      failures.append((f"{name}.{tc.get('name')}", msg.strip()[:3000]))
+
+          summary = '\n'.join(rows)
+          summary += f'\nTOTAL: tests={total} passed={passed} failed={failed} errors={errored} skipped={skipped}'
+          print(summary)
+          print(f'::notice title=Test results::{esc(summary)}')
+          for title, msg in failures[:10]:
+              print(f'::error title={esc_prop("FAILED " + title)}::{esc(msg)}')
+          if len(failures) > 10:
+              rest = '\n'.join(t for t, _ in failures[10:])
+              print(f'::error title=Additional failures ({len(failures) - 10})::{esc(rest)}')
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as fh:
+              fh.write('## Backend test results\n\n```\n' + summary + '\n```\n')
+              for title, msg in failures:
+                  fh.write(f'\n### {title}\n\n```\n{msg}\n```\n')
           EOF
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-reports
           path: target/surefire-reports/
