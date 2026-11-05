@@ -1,13 +1,15 @@
 package com.irctc.irctcbackend.controller;
 
+import com.irctc.irctcbackend.dto.AdminStats;
 import com.irctc.irctcbackend.entity.Booking;
 import com.irctc.irctcbackend.entity.Train;
 import com.irctc.irctcbackend.entity.User;
-import com.irctc.irctcbackend.repository.BookingRepository;
-import com.irctc.irctcbackend.repository.TrainRepository;
-import com.irctc.irctcbackend.repository.UserRepository;
+import com.irctc.irctcbackend.service.AdminService;
+import com.irctc.irctcbackend.service.TrainService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -15,27 +17,26 @@ import java.util.List;
 @RequestMapping("/admin")
 public class AdminController {
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private AdminService adminService;
+    @Autowired private TrainService trainService;
 
-    @Autowired
-    private TrainRepository trainRepository;
-
-    @Autowired
-    private BookingRepository bookingRepository;
+    @GetMapping("/stats")
+    public AdminStats stats() {
+        return adminService.stats();
+    }
 
     @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<User> users() {
+        return adminService.users();
     }
 
     @GetMapping("/trains")
-    public List<Train> getAllTrains() {
-        return trainRepository.findAll();
+    public List<Train> trains() {
+        return trainService.getAll();
     }
 
     @GetMapping("/bookings")
-    public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+    public List<Booking> bookings() {
+        return adminService.bookings();
     }
 }

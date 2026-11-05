@@ -1,102 +1,74 @@
 package com.irctc.irctcbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.irctc.irctcbackend.dto.ClassAvailability;
 import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Entity
-@Table(name = "trains")
+@Table(name = "trains", indexes = {
+        @Index(name = "idx_trains_number", columnList = "trainNumber", unique = true),
+        @Index(name = "idx_trains_route", columnList = "source,destination")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Train {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String trainNumber;
 
+    @Column(nullable = false)
     private String trainName;
 
+    @Column(nullable = false)
     private String source;
 
+    @Column(nullable = false)
     private String destination;
 
-    private Integer totalSeats;
+    private String departureTime;
+    private String arrivalTime;
+    private Integer durationMinutes;
+    private Integer distanceKm;
+    private String trainType;
 
-    private Integer availableSeats = 1000;
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "train_days_of_run", joinColumns = @JoinColumn(name = "train_id"))
+    @Column(name = "day_of_run")
+    private List<String> daysOfRun = new ArrayList<>();
 
-    private Integer racLimit = 50;
+    @Builder.Default
+    @OneToMany(mappedBy = "train", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<TrainClass> classes = new ArrayList<>();
 
-    private Integer waitingLimit = 100;
+    /** Computed per-date availability; not persisted, omitted from JSON when null. */
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, ClassAvailability> availability;
 
-    // GETTERS AND SETTERS
-
-    public Long getId() {
-        return id;
+    public void addClass(TrainClass tc) {
+        classes.add(tc);
+        tc.setTrain(this);
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTrainNumber() {
-        return trainNumber;
-    }
-
-    public void setTrainNumber(String trainNumber) {
-        this.trainNumber = trainNumber;
-    }
-
-    public String getTrainName() {
-        return trainName;
-    }
-
-    public void setTrainName(String trainName) {
-        this.trainName = trainName;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public Integer getTotalSeats() {
-        return totalSeats;
-    }
-
-    public void setTotalSeats(Integer totalSeats) {
-        this.totalSeats = totalSeats;
-    }
-
-    public Integer getAvailableSeats() {
-        return availableSeats;
-    }
-
-    public void setAvailableSeats(Integer availableSeats) {
-        this.availableSeats = availableSeats;
-    }
-
-    public Integer getRacLimit() {
-        return racLimit;
-    }
-
-    public void setRacLimit(Integer racLimit) {
-        this.racLimit = racLimit;
-    }
-
-    public Integer getWaitingLimit() {
-        return waitingLimit;
-    }
-
-    public void setWaitingLimit(Integer waitingLimit) {
-        this.waitingLimit = waitingLimit;
+    public void replaceClasses(List<TrainClass> newClasses) {
+        classes.clear();
+        if (newClasses != null) {
+            for (TrainClass tc : newClasses) {
+                addClass(tc);
+            }
+        }
     }
 }
