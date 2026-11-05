@@ -93,14 +93,20 @@ on the first `CREATE TABLE` (safer than silent data loss).
   environment, so UI runtime verification is build + jsdom render tests + HTTP
   checks — not a real-browser walkthrough.
 - Spring backend: hardened, Flyway migrations added, and a full test suite written
-  (H2 unit tests + a Testcontainers PostgreSQL integration test). **It was NOT
-  compiled or executed in this sandbox.** Verified blockers: no JDK/Maven present;
-  Maven Central, repo1.maven.org, repo.spring.io, maven.google.com, JitPack, Gradle,
-  JBoss, GitHub Packages and all Apache mirrors are network-blocked; Spring publishes
-  no jars to GitHub releases; the GitHub release-asset CDN (needed for a JDK binary)
-  is also blocked; no Docker for Testcontainers. Compilation/test execution must be
-  done with `./mvnw test` / `./mvnw spring-boot:run` in a Java 17 environment with
-  Maven Central access (and Docker for the integration test).
+  (H2 unit tests + a Testcontainers PostgreSQL integration test). The authoring
+  sandbox has no JDK/Maven/Docker and blocks Maven Central, so verification runs on
+  **GitHub Actions (`Backend CI`)**: compilation succeeds on Java 17 and **38/38
+  tests pass (0 failures, 0 skipped)** — 31 H2/unit tests plus 7 real-PostgreSQL
+  integration tests (Flyway migrations, JWT auth/roles/ownership, booking engine
+  over HTTP). CI surfaced and we fixed three real defects: stale aggregate PNR
+  status after RAC/WL promotion on cancellation, public-PNR masking that could
+  auto-flush masked names from detached entities, and an immutable-collection
+  merge crash when updating a train's running days. Testcontainers is pinned to
+  1.21.4 because Boot 3.2.5's 1.19.7 fails Docker discovery on current runners
+  (the integration suite silently skipped); the PG test client uses
+  `JdkClientHttpRequestFactory` because Spring 6.1's `SimpleClientHttpRequestFactory`
+  always streams bodies and cannot read a 401 on POST. Local reproduction:
+  `./mvnw test` with Java 17 + Maven Central + Docker.
 
 ## Known limitations / future work
 
@@ -110,5 +116,6 @@ on the first `CREATE TABLE` (safer than silent data loss).
 - Flyway now owns the schema (`ddl-auto=validate`); a Flyway/Liquibase migration
   path from the OLD incompatible schema is intentionally not automated (fresh DB).
 - The assistant is rule-based; an LLM could be added later behind the same contract.
-- Java compilation/tests could not run in the authoring sandbox (network-blocked
-  dependencies); they must be run in a standard Java 17 + Maven environment.
+- The Spring backend is verified on GitHub Actions (compile + 38/38 tests incl.
+  real PostgreSQL); running it locally still requires Java 17, Maven Central
+  access and Docker for the integration suite.

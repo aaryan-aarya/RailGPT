@@ -196,8 +196,9 @@ The schema is managed by **Flyway**, not `hibernate.ddl-auto=update`:
 | Demo API engine | ✅ 16/16 tests | `cd demo-api && npm test` |
 | Frontend types + build | ✅ passes | `cd frontend && npm run build` |
 | Frontend unit/render | ✅ 15/15 tests | `cd frontend && npx vitest run` |
-| Spring unit tests (H2) | ⚙️ written, **run with Maven** | `./mvnw test` |
-| Spring integration (PostgreSQL) | ⚙️ written, needs **Docker** | `./mvnw test` (Testcontainers) |
+| Spring compilation | ✅ passes (Java 17) | GitHub Actions **Backend CI** (`./mvnw test-compile`) |
+| Spring unit tests (H2) | ✅ 31/31 pass | GitHub Actions **Backend CI** (`./mvnw test`) |
+| Spring integration (PostgreSQL) | ✅ 7/7 pass, 0 skipped | GitHub Actions **Backend CI** (real PostgreSQL via Testcontainers) |
 
 **Java test suites included:**
 - `BookingServiceTest` — seat allocation, RAC/WL overflow, capacity, cancel +
@@ -210,15 +211,15 @@ The schema is managed by **Flyway**, not `hibernate.ddl-auto=update`:
   migrations, JWT auth, roles, ownership, and the full booking flow over HTTP.
   Auto-skipped when Docker is unavailable (`disabledWithoutDocker = true`).
 
-**Important — compilation could not be run in this sandbox.** This environment has
-no JDK/Maven, and Maven Central plus every mirror (repo.spring.io, Google, JitPack,
-Apache, GitHub Packages) and the GitHub release-asset CDN are network-blocked, so the
-Spring dependency tree cannot be downloaded and `mvn compile`/`mvn test` cannot
-execute here. The Java code was therefore verified by careful review and by the
-tested JavaScript reference engine it is ported from — **not by an actual compile**.
-Run `./mvnw test` and `./mvnw spring-boot:run` in a Java 17 environment with Maven
-Central access to build and verify it. The frontend and demo API, by contrast, are
-built, tested and running.
+**Verification note.** The authoring sandbox has no JDK/Maven/Docker and blocks
+Maven Central, so the Spring backend is compiled and tested on **GitHub Actions**
+instead of locally. The `Backend CI` workflow compiles main + test sources with
+Java 17 and runs the full suite: **38/38 tests pass, 0 failures, 0 skipped**,
+including the 7-test real-PostgreSQL integration suite (see the latest run on the
+[Actions tab](https://github.com/aaryan-aarya/RailGPT/actions/workflows/backend-ci.yml)).
+To reproduce locally, run `./mvnw test` with Java 17, Maven Central access and a
+Docker daemon (for Testcontainers); `./mvnw spring-boot:run` starts the API.
+The frontend and demo API are built, tested and running in the sandbox.
 
 ### Continuous integration
 
@@ -227,8 +228,11 @@ on pull requests, and on manual dispatch. It uses Java 17 (Temurin) with Maven
 dependency caching, compiles via the Maven wrapper, and runs **all** backend tests —
 including the real-PostgreSQL Testcontainers integration suite (Docker is
 preinstalled on the `ubuntu-latest` runner). A guard step fails the build if the
-PostgreSQL integration tests were skipped rather than executed. Surefire reports
-are uploaded as build artifacts.
+PostgreSQL integration tests were skipped rather than executed. Per-class test
+totals and any failure details are published as check-run annotations and a job
+summary; Surefire reports are uploaded as build artifacts. Testcontainers is
+pinned to 1.21.4 (Boot 3.2.5's default 1.19.7 fails Docker discovery on current
+runners and silently skips the integration suite).
 
 ---
 
