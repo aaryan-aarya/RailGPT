@@ -20,7 +20,7 @@ public class EmailService {
     private final String fromAddress;
 
     public EmailService(JavaMailSender mailSender,
-                        @Value("${spring.mail.username:}") String fromAddress) {
+                        @Value("${railgpt.mail.from-address:${spring.mail.username:}}") String fromAddress) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
     }

@@ -57,6 +57,27 @@ Switch with `VITE_API_TARGET` (see below). The frontend code is identical in bot
 
 ---
 
+## Free hosted demo (Render + Neon + Brevo)
+
+The repository includes a Render Blueprint at [`render.yaml`](render.yaml) for a
+free demo deployment. It creates the Spring API and React static site on Render;
+PostgreSQL is hosted separately on Neon, and SMTP mail is sent through Brevo.
+Before creating the Render Blueprint, create a Neon PostgreSQL database and a
+Brevo SMTP account, then provide their connection credentials when Render asks.
+Use the Neon connection details to form a JDBC URL such as
+`jdbc:postgresql://<host>/<database>?sslmode=require`; use the Neon database
+user/password separately. For Brevo, use SMTP host `smtp-relay.brevo.com`, port
+`2525`, the SMTP login, an SMTP key (not an API key), and a verified sender
+address. Choose an administrator email and a unique password of at least 14
+characters for the one-time admin bootstrap; remove the bootstrap settings after
+the first successful start.
+
+The hosted demo seeds the illustrative train catalog but does not seed default
+demo accounts. User registration requires working SMTP delivery. Render's free
+API service sleeps after inactivity, and Neon/Render free-tier limits apply; this
+setup is for demonstration, not an always-on production service. Train data and
+fares remain illustrative and are not official railway inventory.
+
 ## Quick start
 
 The **primary backend is Spring Boot + PostgreSQL** (`:8081`). The React frontend

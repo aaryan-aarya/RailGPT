@@ -6,6 +6,25 @@ must be separately approved and configured before claiming those capabilities.
 
 ## Container deployment
 
+## Free hosted demo on Render
+
+`render.yaml` describes the free demo's Render API and frontend. The API uses
+Neon PostgreSQL and Brevo SMTP rather than a Render free database or SMTP port
+587. Create the Neon database first, then create the Render Blueprint from this
+repository and enter the database URL/username/password and Brevo SMTP login/key
+as secret values when prompted. The Blueprint generates independent JWT and OTP
+secrets and sets the production CORS origin to the deployed frontend URL.
+
+Neon JDBC URLs must use `jdbc:postgresql://...?...sslmode=require`. Brevo uses
+`smtp-relay.brevo.com` and port `2525`; enter an SMTP key as the mail password,
+and set `MAIL_FROM_ADDRESS` to a sender verified with Brevo. The Blueprint asks
+for a one-time administrator email and password (at least 14 characters). After
+the first successful API start, disable `BOOTSTRAP_ADMIN_ENABLED` and remove the
+bootstrap email/password from Render. The demo seeds the illustrative train
+catalog while keeping bundled sample accounts disabled. Render's free API can
+sleep while idle; its free plan is not an always-on production SLA. Export
+database backups before making changes to the Neon schema or environment.
+
 The production Compose file runs PostgreSQL, the Spring API, and the static web
 app behind Nginx. The API and database have no published host ports. Nginx binds
 to loopback by default so a host-level TLS reverse proxy can reach it.

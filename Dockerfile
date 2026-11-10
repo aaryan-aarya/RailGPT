@@ -12,5 +12,5 @@ COPY --from=build --chown=railgpt:railgpt /workspace/target/irctc-backend-1.0.0.
 USER railgpt
 EXPOSE 8081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:8081/actuator/health/readiness >/dev/null || exit 1
+  CMD curl -fsS "http://127.0.0.1:${PORT:-8081}/actuator/health/readiness" >/dev/null || exit 1
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]

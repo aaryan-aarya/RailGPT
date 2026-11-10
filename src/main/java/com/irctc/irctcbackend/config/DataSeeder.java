@@ -36,6 +36,7 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private TrainService trainService;
     @Autowired private PasswordEncoder passwordEncoder;
     @Value("${railgpt.seed.enabled:true}") private boolean seedEnabled;
+    @Value("${railgpt.seed.accounts-enabled:true}") private boolean seedAccountsEnabled;
 
     @Override
     @Transactional
@@ -50,7 +51,7 @@ public class DataSeeder implements CommandLineRunner {
             root = objectMapper.readTree(in);
         }
 
-        if (userRepository.count() == 0) {
+        if (seedAccountsEnabled && userRepository.count() == 0) {
             for (JsonNode u : root.get("users")) {
                 User user = User.builder()
                         .name(u.get("name").asText())
@@ -62,6 +63,8 @@ public class DataSeeder implements CommandLineRunner {
                 userRepository.save(user);
             }
             log.info("Seeded {} demo accounts.", root.get("users").size());
+        } else if (!seedAccountsEnabled) {
+            log.info("Demo account seeding is disabled.");
         }
 
         if (trainRepository.count() == 0) {

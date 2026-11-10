@@ -6,7 +6,10 @@ import type { z } from 'zod';
  * Access tokens are held in memory (not localStorage) to reduce XSS exposure.
  */
 
-const BASE_URL = '/api';
+// Keep same-origin requests for local Docker/Vite, but allow a separately hosted
+// API in platforms such as Render. The configured value is the API origin only.
+const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN || '').replace(/\/+$/, '');
+const BASE_URL = `${API_ORIGIN}/api`;
 
 let accessToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
