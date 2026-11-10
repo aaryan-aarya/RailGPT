@@ -36,6 +36,10 @@ build/
 /package-lock.json
 /target/
 .env
+.env.*
+!.env.example
+backups/
+*.dump
 application-local.properties
 
 /irctc-backend/

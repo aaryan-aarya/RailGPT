@@ -36,10 +36,11 @@ interface RequestOptions<T> {
   body?: unknown;
   schema?: z.ZodType<T>;
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 }
 
 export async function apiFetch<T>(path: string, opts: RequestOptions<T> = {}): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...opts.headers };
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 

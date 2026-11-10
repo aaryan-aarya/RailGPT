@@ -6,6 +6,7 @@ import { PnrTicket } from '@/components/rail/pnr-ticket';
 import { FullPageLoader } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { StatusChip } from '@/components/ui/badge';
+import { TicketActions } from '@/features/booking/ticket-actions';
 
 export function ConfirmationPage() {
   const { pnr } = useParams({ from: '/booking/confirmation/$pnr' });
@@ -46,6 +47,9 @@ export function ConfirmationPage() {
       </div>
 
       <div className="mt-8"><PnrTicket booking={booking} train={train} /></div>
+
+      <TicketActions pnr={booking.pnr} />
+      <p className="mt-2 text-xs text-muted">Booking details are queued for your registered email. You’ll also receive an email if your booking is cancelled or its RAC / waiting-list status changes.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Link to="/trips" className="inline-flex h-11 items-center justify-center gap-2 rounded border border-line bg-surface text-sm font-medium text-ink hover:border-brand/40 transition-colors">

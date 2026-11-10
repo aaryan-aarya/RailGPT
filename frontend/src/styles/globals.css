@@ -4,10 +4,83 @@
 
 @layer base {
   :root {
-    --rail-ink: #0f2438;
-    --rail-brand: #12395b;
-    --rail-accent: #e08a2e;
+    --color-paper: 246 245 240;
+    --color-surface: 255 254 251;
+    --color-ink: 24 53 46;
+    --color-body: 67 91 83;
+    --color-muted: 116 134 126;
+    --color-line: 228 232 223;
+    --color-brand: 23 107 85;
+    --color-brand-strong: 16 74 59;
+    --color-brand-soft: 228 240 234;
+    --color-brand-tint: 240 246 241;
+    --color-accent: 198 107 67;
+    --color-accent-strong: 168 79 46;
+    --color-accent-soft: 248 234 227;
+    --color-ok: 30 127 79;
+    --color-ok-soft: 231 243 236;
+    --color-ok-line: 191 224 206;
+    --color-rac: 183 121 31;
+    --color-rac-soft: 251 241 222;
+    --color-rac-line: 235 211 168;
+    --color-wl: 194 65 12;
+    --color-wl-soft: 251 234 226;
+    --color-wl-line: 240 196 174;
+    --color-cancel: 100 116 139;
+    --color-cancel-soft: 238 241 244;
+    --color-cancel-line: 215 221 228;
+    --color-partial: 14 116 144;
+    --color-partial-soft: 228 242 245;
+    --color-partial-line: 185 220 228;
+    --rail-ink: #18352e;
+    --rail-brand: #176b55;
+    --rail-accent: #c66b43;
+    color-scheme: light;
   }
+  :root.dark {
+    --color-paper: 15 24 22;
+    --color-surface: 23 34 31;
+    --color-ink: 237 243 236;
+    --color-body: 197 210 201;
+    --color-muted: 147 165 154;
+    --color-line: 49 67 58;
+    --color-brand: 42 121 90;
+    --color-brand-strong: 41 126 97;
+    --color-brand-soft: 28 53 43;
+    --color-brand-tint: 24 43 36;
+    --color-accent: 170 81 54;
+    --color-accent-strong: 150 68 45;
+    --color-accent-soft: 61 40 31;
+    --color-ok: 47 139 88;
+    --color-ok-soft: 25 53 37;
+    --color-ok-line: 47 91 61;
+    --color-rac: 226 173 84;
+    --color-rac-soft: 59 46 27;
+    --color-rac-line: 99 75 38;
+    --color-wl: 172 70 49;
+    --color-wl-soft: 61 35 31;
+    --color-wl-line: 105 57 45;
+    --color-cancel: 165 178 189;
+    --color-cancel-soft: 39 49 55;
+    --color-cancel-line: 60 75 83;
+    --color-partial: 105 191 211;
+    --color-partial-soft: 24 48 55;
+    --color-partial-line: 43 79 88;
+    --rail-ink: #edf3ec;
+    --rail-brand: #62b897;
+    --rail-accent: #e59e7a;
+    color-scheme: dark;
+  }
+  :root.dark .text-brand,
+  :root.dark .hover\:text-brand:hover { color: #79c9a6; }
+  :root.dark .text-accent,
+  :root.dark .text-accent-strong { color: #efae8f; }
+  :root.dark .text-ok { color: #81d39b; }
+  :root.dark .text-wl { color: #f09378; }
+  :root.dark .bg-accent,
+  :root.dark .hover\:bg-accent-strong:hover { background-color: #a64c32; }
+  :root.dark .bg-ok { background-color: #245c3a; }
+  :root.dark .bg-wl { background-color: #873f32; }
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
@@ -15,12 +88,17 @@
   body {
     @apply bg-paper text-body font-sans text-base antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04';
+    background-image: radial-gradient(ellipse at 50% -22rem, rgba(224, 232, 219, 0.56), transparent 46rem);
+    min-width: 320px;
+  }
+  :root.dark body {
+    background-image: radial-gradient(ellipse at 50% -22rem, rgba(62, 106, 82, 0.12), transparent 46rem);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply text-ink font-semibold;
   }
   ::selection {
-    background: rgba(224, 138, 46, 0.25);
+    background: rgba(198, 107, 67, 0.2);
   }
   :focus-visible {
     outline: 2px solid var(--rail-brand);
@@ -38,18 +116,18 @@
 
 @layer components {
   .app-container {
-    @apply mx-auto w-full max-w-app px-4 sm:px-6;
+    @apply mx-auto w-full max-w-app px-5 sm:px-8;
   }
   .surface-card {
-    @apply bg-surface border border-line rounded shadow-card;
+    @apply bg-surface border border-line rounded-lg shadow-card;
   }
   .field-label {
     @apply block text-sm font-medium text-ink mb-1.5;
   }
   .field-input {
-    @apply w-full rounded border border-line bg-surface px-3 py-2 text-base text-ink
+    @apply w-full rounded-md border border-line bg-surface px-3.5 py-2.5 text-base text-ink
       placeholder:text-muted/70 transition-colors
-      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15
+      focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10
       disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted;
   }
   .field-error {
@@ -75,10 +153,10 @@
     width: 18px;
     height: 18px;
     border-radius: 9999px;
-    background: var(--notch-bg, #f4f5f2);
+    background: var(--notch-bg, #f6f5f0);
     top: 50%;
     transform: translateY(-50%);
-    border: 1px solid #e2e6e0;
+    border: 1px solid #e4e8df;
   }
   .ticket-notch::before { left: -10px; }
   .ticket-notch::after { right: -10px; }
@@ -100,6 +178,22 @@
     transform: translateX(-100%);
     background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
     animation: shimmer 1.4s infinite;
+  }
+
+  .page-heading {
+    @apply text-3xl font-semibold tracking-[-0.035em] text-ink sm:text-4xl;
+  }
+  .eyebrow {
+    @apply text-2xs font-semibold uppercase tracking-[0.18em] text-brand;
+  }
+  .soft-grid {
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+  .berth-layout-scroll {
+    overflow-x: auto;
+    scrollbar-color: rgb(var(--color-muted) / 0.35) transparent;
+    scrollbar-width: thin;
   }
 }
 

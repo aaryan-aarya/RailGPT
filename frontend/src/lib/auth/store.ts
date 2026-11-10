@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User } from '@/lib/api/schemas';
+import type { RegistrationResponse, User } from '@/lib/api/schemas';
 import * as api from '@/lib/api/endpoints';
 import { setAccessToken, onUnauthorized } from '@/lib/api/client';
 
@@ -9,7 +9,9 @@ interface AuthState {
   user: User | null;
   status: AuthStatus;
   login: (email: string, password: string) => Promise<User>;
-  register: (input: { name: string; email: string; password: string; phone?: string }) => Promise<User>;
+  register: (input: { name: string; email: string; password: string; phone?: string }) => Promise<RegistrationResponse>;
+  verifyRegistrationOtp: (email: string, otp: string) => Promise<User>;
+  resendRegistrationOtp: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   bootstrap: () => Promise<void>;
   setUser: (user: User) => void;
@@ -29,9 +31,23 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   register: async (input) => {
     const res = await api.register(input);
+    // The demo API completes registration directly; Spring returns an OTP challenge.
+    if ('token' in res) {
+      setAccessToken(res.token);
+      set({ user: res.user, status: 'authenticated' });
+    }
+    return res;
+  },
+
+  verifyRegistrationOtp: async (email, otp) => {
+    const res = await api.verifyRegistrationOtp(email, otp);
     setAccessToken(res.token);
     set({ user: res.user, status: 'authenticated' });
     return res.user;
+  },
+
+  resendRegistrationOtp: async (email) => {
+    await api.resendRegistrationOtp(email);
   },
 
   logout: async () => {

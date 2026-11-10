@@ -10,7 +10,7 @@ export function Badge({ children, className, tone = 'neutral' }: { children: Rea
     accent: 'bg-accent-soft text-accent-strong border-accent/20',
   };
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-xs font-medium', tones[tone], className)}>
+    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium', tones[tone], className)}>
       {children}
     </span>
   );
@@ -32,7 +32,7 @@ export function StatusChip({ status, size = 'md', className }: { status: Booking
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-sm border font-semibold uppercase tracking-wide',
+        'inline-flex items-center gap-1.5 rounded-full border font-semibold uppercase tracking-[0.06em]',
         size === 'sm' ? 'px-1.5 py-0.5 text-2xs' : 'px-2 py-1 text-xs',
         cfg.cls,
         className,

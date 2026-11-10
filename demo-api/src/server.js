@@ -13,6 +13,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,12 +32,16 @@ const PERSIST = process.env.DEMO_PERSIST !== 'false';
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
-let db = { seq: { user: 1, train: 1, booking: 1 }, users: [], trains: [], bookings: [] };
+let db = { seq: { user: 1, train: 1, booking: 1, audit: 1 }, users: [], trains: [], bookings: [], auditEvents: [], idempotencyRecords: {} };
 
 function loadState() {
   if (PERSIST && fs.existsSync(DATA_FILE)) {
     try {
       db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      db.seq ||= { user: 1, train: 1, booking: 1 };
+      db.seq.audit ||= 1;
+      db.auditEvents ||= [];
+      db.idempotencyRecords ||= {};
       let maxPax = 0;
       for (const b of db.bookings) for (const p of b.passengers) maxPax = Math.max(maxPax, p.id || 0);
       _setPaxSeq(maxPax + 1);
@@ -47,7 +52,7 @@ function loadState() {
 }
 
 function seed() {
-  db = { seq: { user: 1, train: 1, booking: 1 }, users: [], trains: [], bookings: [] };
+  db = { seq: { user: 1, train: 1, booking: 1, audit: 1 }, users: [], trains: [], bookings: [], auditEvents: [], idempotencyRecords: {} };
   for (const u of DEMO_USERS) {
     db.users.push({
       id: db.seq.user++, name: u.name, email: u.email.toLowerCase(),
@@ -123,6 +128,9 @@ function publicBooking(booking, viewer) {
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function validDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)); }
 function err(res, status, code, message) { return res.status(status).json({ code, message }); }
+function audit(pnr, eventType, actorEmail, details) {
+  db.auditEvents.push({ id: db.seq.audit++, pnr, eventType, actorEmail, details, createdAt: Date.now() });
+}
 
 function classAvailability(train, journeyDate) {
   const out = {};
@@ -275,6 +283,16 @@ app.delete('/train/:trainNumber', requireAdmin, (req, res) => {
 // ---- Booking ----
 app.post('/booking/book', requireAuth, (req, res) => {
   const { trainNumber, journeyDate, classType, passengers, boarding, reservation } = req.body || {};
+  const idempotencyKey = String(req.get('Idempotency-Key') || '').trim();
+  if (idempotencyKey.length > 100) return err(res, 400, 'INVALID_IDEMPOTENCY_KEY', 'Idempotency-Key must be 100 characters or fewer.');
+  const requestHash = idempotencyKey ? createHash('sha256').update(JSON.stringify({ trainNumber, journeyDate, classType, passengers, boarding, reservation })).digest('hex') : null;
+  const idempotencyMapKey = idempotencyKey ? `${req.user.email}\n${idempotencyKey}` : null;
+  const previous = idempotencyMapKey ? db.idempotencyRecords[idempotencyMapKey] : null;
+  if (previous) {
+    if (previous.requestHash !== requestHash) return err(res, 409, 'IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different booking request.');
+    const original = db.bookings.find((item) => item.pnr === previous.pnr);
+    if (original) return res.status(200).json(original);
+  }
   const train = db.trains.find((t) => t.trainNumber === String(trainNumber));
   if (!train) return err(res, 404, 'TRAIN_NOT_FOUND', 'Train not found.');
   if (!validDate(journeyDate)) return err(res, 400, 'VALIDATION', 'A valid journey date (YYYY-MM-DD) is required.');
@@ -292,6 +310,8 @@ app.post('/booking/book', requireAuth, (req, res) => {
       userEmail: req.user.email, journeyDate, classType: classType || 'SL',
       passengers, boarding, reservation,
     });
+    audit(booking.pnr, 'BOOKING_CREATED', req.user.email, `Booking created with ${booking.passengers.length} passenger(s); status ${booking.status}.`);
+    if (idempotencyMapKey) db.idempotencyRecords[idempotencyMapKey] = { requestHash, pnr: booking.pnr };
     saveState();
     res.status(201).json(booking);
   } catch (e) {
@@ -319,9 +339,26 @@ app.delete('/booking/cancel/:pnr', requireAuth, (req, res) => {
   const booking = db.bookings.find((b) => b.pnr === req.params.pnr);
   if (!booking) return err(res, 404, 'PNR_NOT_FOUND', 'PNR not found.');
   if (req.user.role !== 'ADMIN' && req.user.email !== booking.userEmail) return err(res, 403, 'FORBIDDEN', 'You can only cancel your own bookings.');
+  if (booking.status === 'CANCELLED') return res.json(booking);
   const train = db.trains.find((t) => t.trainNumber === booking.trainNumber);
   if (!train) return err(res, 404, 'TRAIN_NOT_FOUND', 'Train not found.');
+  const previousStatuses = new Map();
+  for (const candidate of db.bookings) {
+    if (candidate.trainNumber !== booking.trainNumber || candidate.journeyDate !== booking.journeyDate || candidate.classType !== booking.classType) continue;
+    for (const passenger of candidate.passengers) previousStatuses.set(passenger.id, { status: passenger.status, pnr: candidate.pnr });
+  }
   cancelBooking(db, train, booking);
+  audit(booking.pnr, 'BOOKING_CANCELLED', req.user.email, 'Booking cancelled; released places were reallocated in queue order.');
+  for (const candidate of db.bookings) {
+    if (candidate.trainNumber !== booking.trainNumber || candidate.journeyDate !== booking.journeyDate || candidate.classType !== booking.classType || candidate.pnr === booking.pnr) continue;
+    for (const passenger of candidate.passengers) {
+      const before = previousStatuses.get(passenger.id)?.status;
+      if (before && before !== passenger.status) {
+        const eventType = passenger.status === 'CONFIRMED' ? 'RAC_PROMOTED' : passenger.status === 'RAC' ? 'WAITLIST_PROMOTED' : null;
+        if (eventType) audit(candidate.pnr, eventType, 'SYSTEM', `Passenger status changed from ${before} to ${passenger.status} after cancellation.`);
+      }
+    }
+  }
   saveState();
   res.json(booking);
 });
@@ -343,6 +380,15 @@ app.get('/admin/stats', requireAdmin, (req, res) => {
 app.get('/admin/users', requireAdmin, (req, res) => res.json(db.users.map(sanitizeUser)));
 app.get('/admin/trains', requireAdmin, (req, res) => res.json(db.trains));
 app.get('/admin/bookings', requireAdmin, (req, res) => res.json([...db.bookings].sort((a, b) => b.createdAt - a.createdAt)));
+app.get('/admin/audit', requireAdmin, (req, res) => {
+  const page = Math.max(0, Number.parseInt(req.query.page, 10) || 0);
+  const size = Math.max(1, Math.min(Number.parseInt(req.query.size, 10) || 25, 100));
+  const pnr = String(req.query.pnr || '').trim();
+  const events = db.auditEvents.filter((event) => !pnr || event.pnr === pnr).sort((a, b) => b.createdAt - a.createdAt);
+  const totalElements = events.length;
+  res.json({ content: events.slice(page * size, (page + 1) * size), totalElements,
+    totalPages: Math.ceil(totalElements / size), number: page, size });
+});
 
 // ---- Chatbot ----
 app.post('/chatbot/ask', (req, res) => {

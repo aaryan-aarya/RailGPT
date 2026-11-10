@@ -13,10 +13,11 @@ import { todayISO, addDaysISO, formatDuration, classLabel, formatDate } from '@/
 
 export function TrainDetailPage() {
   const { trainNumber } = useParams({ from: '/trains/$trainNumber' });
-  const search = useSearch({ from: '/trains/$trainNumber' }) as { date?: string; class?: string };
+  const search = useSearch({ from: '/trains/$trainNumber' }) as { date?: string; class?: string; berth?: string };
   const navigate = useNavigate();
   const [date, setDate] = useState(search.date || todayISO());
   const [selectedClass, setSelectedClass] = useState<string>(search.class || '');
+  const [selectedBerth, setSelectedBerth] = useState<string>(search.berth || '');
 
   const { data: train, isLoading, isError, error } = useQuery({
     queryKey: ['train', trainNumber, date],
@@ -24,11 +25,22 @@ export function TrainDetailPage() {
   });
 
   useEffect(() => {
-    if (train && !selectedClass) {
+    if (train && (!selectedClass || !train.classes.some((c) => c.classType === selectedClass))) {
       const firstAvailable = train.classes.find((c) => train.availability?.[c.classType]?.status !== 'FULL');
-      setSelectedClass(search.class || firstAvailable?.classType || train.classes[0]?.classType || '');
+      const requestedClass = train.classes.find((c) => c.classType === search.class)?.classType;
+      setSelectedClass(requestedClass || firstAvailable?.classType || train.classes[0]?.classType || '');
     }
   }, [train, selectedClass, search.class]);
+
+  useEffect(() => {
+    if (!selectedBerth || !selectedClass) return;
+    const chairClass = ['CC', 'EC', '2S'].includes(selectedClass);
+    const validPreferences = chairClass ? ['WINDOW', 'AISLE']
+      : selectedClass === '1A' ? ['LB', 'UB']
+      : selectedClass === '2A' ? ['LB', 'UB', 'SL', 'SU']
+      : ['LB', 'MB', 'UB', 'SL', 'SU'];
+    if (!validPreferences.includes(selectedBerth)) setSelectedBerth('');
+  }, [selectedClass, selectedBerth]);
 
   if (isLoading) return <FullPageLoader label="Loading train details…" />;
   if (isError || !train) {
@@ -113,10 +125,14 @@ export function TrainDetailPage() {
           {inv && (
             <>
               <div className="surface-card p-5">
-                <h3 className="text-md font-semibold text-ink">{classLabel(selectedClass)} availability</h3>
+            <h3 className="text-md font-semibold text-ink">{classLabel(selectedClass)} availability</h3>
                 <div className="mt-4"><AvailabilityMeter inv={inv} /></div>
               </div>
-              <BerthMap classType={selectedClass} seatNumber={null} />
+              <div className="surface-card p-4 sm:p-5">
+                <p className="mb-3 text-sm font-semibold text-ink">Choose a berth preference <span className="font-normal text-muted">(optional)</span></p>
+                <BerthMap classType={selectedClass} seatNumber={null} selectedBerth={selectedBerth || null}
+                  onSelectBerth={(berth) => setSelectedBerth(berth || '')} />
+              </div>
               <div className="surface-card p-5">
                 {canBook ? (
                   <>
@@ -129,7 +145,7 @@ export function TrainDetailPage() {
                       <span className="font-medium text-ink">{formatDate(date)}</span>
                     </div>
                     <Button className="mt-4 w-full" size="lg"
-                      onClick={() => navigate({ to: '/book/$trainNumber', params: { trainNumber }, search: { date, class: selectedClass } })}>
+                      onClick={() => navigate({ to: '/book/$trainNumber', params: { trainNumber }, search: { date, class: selectedClass, berth: selectedBerth || undefined } })}>
                       Proceed to book <ArrowRight className="h-4 w-4" />
                     </Button>
                     <p className="mt-2.5 text-center text-2xs text-muted">You’ll add passenger details on the next step.</p>

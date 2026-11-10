@@ -1,13 +1,17 @@
 package com.irctc.irctcbackend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.irctc.irctcbackend.dto.BookingRequest;
 import com.irctc.irctcbackend.dto.PassengerInput;
 import com.irctc.irctcbackend.entity.Booking;
+import com.irctc.irctcbackend.entity.BookingIdempotencyRecord;
 import com.irctc.irctcbackend.entity.Passenger;
 import com.irctc.irctcbackend.entity.Train;
 import com.irctc.irctcbackend.entity.TrainClass;
 import com.irctc.irctcbackend.exception.ApiException;
 import com.irctc.irctcbackend.repository.BookingRepository;
+import com.irctc.irctcbackend.repository.BookingIdempotencyRepository;
 import com.irctc.irctcbackend.repository.PassengerRepository;
 import com.irctc.irctcbackend.repository.TrainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +32,10 @@ public class BookingService {
     @Autowired private BookingRepository bookingRepository;
     @Autowired private TrainRepository trainRepository;
     @Autowired private PassengerRepository passengerRepository;
+    @Autowired private BookingIdempotencyRepository idempotencyRepository;
+    @Autowired private BookingAuditService auditService;
+    @Autowired private TicketEmailOutboxService ticketEmailOutboxService;
+    @Autowired private ObjectMapper objectMapper;
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int MAX_ADVANCE_DAYS = 120;
@@ -48,9 +59,46 @@ public class BookingService {
 
     @Transactional
     public Booking book(String userEmail, BookingRequest req) {
+        return bookWithOutcome(userEmail, req, null).booking();
+    }
+
+    @Transactional
+    public Booking book(String userEmail, BookingRequest req, String idempotencyKey) {
+        return bookWithOutcome(userEmail, req, idempotencyKey).booking();
+    }
+
+    @Transactional
+    public BookingOutcome bookWithOutcome(String userEmail, BookingRequest req, String idempotencyKey) {
+        String requestHash = null;
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            if (idempotencyKey.length() > 100) {
+                throw ApiException.badRequest("INVALID_IDEMPOTENCY_KEY", "Idempotency-Key must be 100 characters or fewer.");
+            }
+            requestHash = hashRequest(req);
+            var previous = idempotencyRepository.findByUserEmailAndIdempotencyKey(userEmail, idempotencyKey.trim());
+            if (previous.isPresent()) {
+                if (!previous.get().getRequestHash().equals(requestHash)) {
+                    throw ApiException.conflict("IDEMPOTENCY_KEY_REUSED", "This Idempotency-Key was already used for a different booking request.");
+                }
+                return new BookingOutcome(previous.get().getBooking(), false);
+            }
+        }
+
         // Pessimistic lock serializes concurrent bookings/cancellations for this train.
         Train train = trainRepository.findByTrainNumberForUpdate(req.trainNumber())
                 .orElseThrow(() -> ApiException.notFound("TRAIN_NOT_FOUND", "Train not found."));
+
+        // Repeat the check after taking the train lock: simultaneous retries for
+        // this journey now see and reuse the first committed booking.
+        if (requestHash != null) {
+            var previous = idempotencyRepository.findByUserEmailAndIdempotencyKey(userEmail, idempotencyKey.trim());
+            if (previous.isPresent()) {
+                if (!previous.get().getRequestHash().equals(requestHash)) {
+                    throw ApiException.conflict("IDEMPOTENCY_KEY_REUSED", "This Idempotency-Key was already used for a different booking request.");
+                }
+                return new BookingOutcome(previous.get().getBooking(), false);
+            }
+        }
 
         validateJourneyDate(req.journeyDate());
 
@@ -121,8 +169,23 @@ public class BookingService {
         // Idempotent rebalance: promote RAC->CONFIRMED / WL->RAC and renumber queues.
         rebalance(rows, cls);
         refreshBookingStatuses(rows);
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        ticketEmailOutboxService.enqueueForBooking(saved.getPnr(), saved.getUserEmail(), saved.getStatus());
+        auditService.record(saved.getPnr(), "BOOKING_CREATED", userEmail,
+                "Booking created with " + saved.getPassengers().size() + " passenger(s); status " + saved.getStatus() + ".");
+        if (requestHash != null) {
+            idempotencyRepository.saveAndFlush(BookingIdempotencyRecord.builder()
+                    .userEmail(userEmail)
+                    .idempotencyKey(idempotencyKey.trim())
+                    .requestHash(requestHash)
+                    .booking(saved)
+                    .createdAt(System.currentTimeMillis())
+                    .build());
+        }
+        return new BookingOutcome(saved, true);
     }
+
+    public record BookingOutcome(Booking booking, boolean created) {}
 
     // ---------------------------------------------------------------- cancel
 
@@ -144,7 +207,9 @@ public class BookingService {
                 .findFirst()
                 .orElseThrow(() -> ApiException.badRequest("CLASS_NOT_FOUND", "Class not found."));
 
+        Map<Long, PassengerSnapshot> previousStates = new HashMap<>();
         for (Passenger p : booking.getPassengers()) {
+            previousStates.put(p.getId(), snapshot(p));
             if (!"CANCELLED".equals(p.getStatus())) {
                 p.setStatus("CANCELLED");
                 p.setSeatNumber(null);
@@ -161,12 +226,44 @@ public class BookingService {
         // cancellation visible to this query within the same transaction).
         List<Passenger> rows = passengerRepository.findForInventory(
                 train.getTrainNumber(), booking.getJourneyDate(), booking.getClassType());
+        for (Passenger row : rows) {
+            previousStates.putIfAbsent(row.getId(), snapshot(row));
+        }
         rebalance(rows, cls);
         // Promotions change other bookings too — recompute every affected PNR's
         // aggregate status so promoted bookings no longer report stale RAC/WL.
         refreshBookingStatuses(rows);
 
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+        ticketEmailOutboxService.enqueueForCancellation(saved.getPnr(), saved.getUserEmail());
+        Set<String> notifiedPnrs = new HashSet<>();
+
+        auditService.record(booking.getPnr(), "BOOKING_CANCELLED", userEmail,
+                "Booking cancelled; released places were reallocated in queue order.");
+        for (Passenger row : rows) {
+            PassengerSnapshot before = previousStates.get(row.getId());
+            if (before == null || row.getBooking() == null || row.getBooking().getPnr().equals(booking.getPnr())) continue;
+
+            boolean statusChanged = !Objects.equals(before.status(), row.getStatus());
+            boolean positionChanged = ("RAC".equals(row.getStatus()) && !Objects.equals(before.racNumber(), row.getRacNumber()))
+                    || ("WL".equals(row.getStatus()) && !Objects.equals(before.waitingNumber(), row.getWaitingNumber()));
+            if (statusChanged || positionChanged) {
+                String event = statusChanged
+                        ? ("CONFIRMED".equals(row.getStatus()) ? "RAC_PROMOTED"
+                            : "RAC".equals(row.getStatus()) ? "WAITLIST_PROMOTED" : "PASSENGER_STATUS_CHANGED")
+                        : "QUEUE_POSITION_CHANGED";
+                String details = statusChanged
+                        ? "Passenger status changed from " + before.status() + " to " + row.getStatus() + " after cancellation."
+                        : "Passenger queue position changed after cancellation.";
+                auditService.record(row.getBooking().getPnr(), event, "SYSTEM", details);
+                if (notifiedPnrs.add(row.getBooking().getPnr())) {
+                    ticketEmailOutboxService.enqueueStatusChange(
+                            row.getBooking().getPnr(), row.getBooking().getUserEmail(), row.getBooking().getStatus());
+                }
+            }
+        }
+
+        return saved;
     }
 
     // ------------------------------------------------------------------ reads
@@ -214,6 +311,16 @@ public class BookingService {
                     .build());
         }
         return view;
+    }
+
+    /** Return the unmasked booking only to its owner or an administrator. */
+    public Booking getTicketBooking(String pnr, String viewerEmail, boolean isAdmin) {
+        Booking booking = bookingRepository.findByPnr(pnr)
+                .orElseThrow(() -> ApiException.notFound("PNR_NOT_FOUND", "PNR not found."));
+        if (!isAdmin && (viewerEmail == null || !viewerEmail.equalsIgnoreCase(booking.getUserEmail()))) {
+            throw ApiException.forbidden("FORBIDDEN", "You can only access your own ticket.");
+        }
+        return booking;
     }
 
     public List<Booking> getMyBookings(String userEmail) {
@@ -315,6 +422,12 @@ public class BookingService {
         return "PARTIAL";
     }
 
+    private PassengerSnapshot snapshot(Passenger passenger) {
+        return new PassengerSnapshot(passenger.getStatus(), passenger.getRacNumber(), passenger.getWaitingNumber());
+    }
+
+    private record PassengerSnapshot(String status, Integer racNumber, Integer waitingNumber) {}
+
     private String berth(String classType, int seat) {
         String[] pattern = BERTH_PATTERN.getOrDefault(classType, new String[]{"LB", "UB"});
         int[] meta = CLASS_META.getOrDefault(classType, new int[]{8, 72});
@@ -337,6 +450,16 @@ public class BookingService {
             if (!bookingRepository.existsByPnr(pnr)) return pnr;
         }
         throw ApiException.conflict("PNR_COLLISION", "Could not generate a unique PNR. Please retry.");
+    }
+
+    private String hashRequest(BookingRequest request) {
+        try {
+            byte[] canonical = objectMapper.writeValueAsBytes(request);
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(canonical);
+            return HexFormat.of().formatHex(digest);
+        } catch (JsonProcessingException | NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("Unable to fingerprint booking request.", ex);
+        }
     }
 
     private String maskName(String name) {

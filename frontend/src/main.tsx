@@ -14,6 +14,15 @@ import { router } from './app/router';
 import { useAuth } from './lib/auth/store';
 import { Toaster } from './components/ui/toast';
 
+// Apply the saved/system color scheme before mounting React to avoid a light-mode flash.
+try {
+  const savedTheme = localStorage.getItem('railgpt:theme');
+  const useDark = savedTheme === 'dark' || (savedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', useDark);
+} catch {
+  document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

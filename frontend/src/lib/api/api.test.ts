@@ -116,11 +116,25 @@ describe('endpoint wrappers (request + contract)', () => {
     expect(res.user.email).toBe('aarav@railgpt.app');
   });
 
-  it('register posts the profile and parses AuthResponse', async () => {
-    const fn = stubFetch(201, AUTH);
-    await api.register({ name: 'Aarav', email: 'aarav@railgpt.app', password: 'Travel@123' });
+  it('register requests email verification and parses the OTP challenge', async () => {
+    const fn = stubFetch(202, { message: 'Verification OTP sent successfully.', email: 'aarav@railgpt.app' });
+    const res = await api.register({ name: 'Aarav', email: 'aarav@railgpt.app', password: 'Travel@123' });
     expect(fn.mock.calls[0][0]).toBe('/api/auth/register');
     expect(fn.mock.calls[0][1].method).toBe('POST');
+    expect(res).toMatchObject({ email: 'aarav@railgpt.app' });
+    const verify = stubFetch(201, AUTH);
+    expect((await api.verifyRegistrationOtp('aarav@railgpt.app', '123456')).token).toBe('jwt-token');
+    expect(verify.mock.calls[0][0]).toBe('/api/auth/verify-otp');
+    expect(verify.mock.calls[0][1].body).toBe(JSON.stringify({ email: 'aarav@railgpt.app', otp: '123456' }));
+    const resend = stubFetch(200, { message: 'A new verification OTP has been sent.' });
+    await api.resendRegistrationOtp('aarav@railgpt.app');
+    expect(resend.mock.calls[0][0]).toBe('/api/auth/resend-otp');
+  });
+
+  it('keeps the demo API immediate-registration response compatible', async () => {
+    stubFetch(201, AUTH);
+    const result = await api.register({ name: 'Aarav', email: 'aarav@railgpt.app', password: 'Travel@123' });
+    expect('token' in result ? result.user.email : result.email).toBe('aarav@railgpt.app');
   });
 
   it('getMe unwraps { user }', async () => {
@@ -229,6 +243,19 @@ describe('auth store lifecycle', () => {
   it('login stores the token in memory and authenticates', async () => {
     stubFetch(200, AUTH);
     const user = await useAuth.getState().login('aarav@railgpt.app', 'Travel@123');
+    expect(user.email).toBe('aarav@railgpt.app');
+    expect(getAccessToken()).toBe('jwt-token');
+    expect(useAuth.getState().status).toBe('authenticated');
+  });
+
+  it('registration starts without authenticating; OTP verification establishes the session', async () => {
+    stubFetch(202, { message: 'Verification OTP sent successfully.', email: 'aarav@railgpt.app' });
+    const challenge = await useAuth.getState().register({ name: 'Aarav', email: 'aarav@railgpt.app', password: 'Travel@123' });
+    expect(challenge).toMatchObject({ email: 'aarav@railgpt.app' });
+    expect(useAuth.getState().status).toBe('unauthenticated');
+    expect(getAccessToken()).toBeNull();
+    stubFetch(201, AUTH);
+    const user = await useAuth.getState().verifyRegistrationOtp('aarav@railgpt.app', '123456');
     expect(user.email).toBe('aarav@railgpt.app');
     expect(getAccessToken()).toBe('jwt-token');
     expect(useAuth.getState().status).toBe('authenticated');

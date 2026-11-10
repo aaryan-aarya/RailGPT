@@ -13,7 +13,7 @@ import { Input, Select } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
 import { Alert } from '@/components/ui/alert';
 import { FullPageLoader } from '@/components/ui/spinner';
-import { StatusChip } from '@/components/ui/badge';
+import { BerthMap } from '@/components/rail/berth-map';
 import { toast } from '@/components/ui/toast';
 import { formatINR, formatDate, classLabel, genderLabel } from '@/lib/utils';
 
@@ -21,15 +21,13 @@ const formSchema = z.object({ passengers: z.array(PassengerInputSchema).min(1).m
 type FormInput = z.input<typeof formSchema>;
 type FormValues = z.output<typeof formSchema>;
 
-const SLEEPER_BERTHS = ['LB', 'MB', 'UB', 'SL', 'SU'];
-const CHAIR_PREFS = ['WINDOW', 'AISLE'];
-function berthOptions(classType: string) {
-  return ['CC', 'EC', '2S'].includes(classType) ? CHAIR_PREFS : SLEEPER_BERTHS;
+function newIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return Date.now() + '-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2);
 }
-
 export function BookingPage() {
   const { trainNumber } = useParams({ from: '/book/$trainNumber' });
-  const search = useSearch({ from: '/book/$trainNumber' }) as { date?: string; class?: string };
+  const search = useSearch({ from: '/book/$trainNumber' }) as { date?: string; class?: string; berth?: string };
   const navigate = useNavigate();
   const date = search.date || '';
   const classType = search.class || 'SL';
@@ -41,9 +39,9 @@ export function BookingPage() {
     queryFn: () => getTrain(trainNumber, date),
   });
 
-  const { control, register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormInput, unknown, FormValues>({
+  const { control, register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { passengers: [{ name: '', age: '', gender: undefined, berthPreference: '' }] },
+    defaultValues: { passengers: [{ name: '', age: '', gender: undefined, berthPreference: search.berth || '' }] },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'passengers' });
   const passengers = watch('passengers');
@@ -54,11 +52,28 @@ export function BookingPage() {
 
   async function onSubmit(values: FormValues) {
     setServerError('');
+    const request = {
+      trainNumber, journeyDate: date, classType,
+      passengers: values.passengers.map((p) => ({ ...p, berthPreference: p.berthPreference || undefined })),
+    };
+    const fingerprint = JSON.stringify(request);
+    const storageKey = `railgpt:booking-key:${trainNumber}:${date}:${classType}`;
+    let saved: { fingerprint: string; key: string } | null = null;
     try {
-      const booking = await bookTicket({
-        trainNumber, journeyDate: date, classType,
-        passengers: values.passengers.map((p) => ({ ...p, berthPreference: p.berthPreference || undefined })),
-      });
+      const raw = sessionStorage.getItem(storageKey);
+      saved = raw ? JSON.parse(raw) as { fingerprint: string; key: string } : null;
+    } catch {
+      saved = null;
+    }
+    const idempotencyKey = saved?.fingerprint === fingerprint ? saved.key : newIdempotencyKey();
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify({ fingerprint, key: idempotencyKey }));
+    } catch {
+      // The request remains protected while this page stays open.
+    }
+    try {
+      const booking = await bookTicket(request, idempotencyKey);
+      try { sessionStorage.removeItem(storageKey); } catch { /* ignore unavailable storage */ }
       toast({ title: 'Booking confirmed', description: `PNR ${booking.pnr}`, tone: 'success' });
       navigate({ to: '/booking/confirmation/$pnr', params: { pnr: booking.pnr } });
     } catch (e) {
@@ -144,13 +159,16 @@ export function BookingPage() {
                       <option value="O">Other</option>
                     </Select>
                   </Field>
-                  <Field label="Berth preference (optional)" htmlFor={`p-berth-${i}`} className="sm:col-span-2"
-                    hint="Preferences are noted but allocation follows availability.">
-                    <Select id={`p-berth-${i}`} defaultValue="" {...register(`passengers.${i}.berthPreference`)}>
-                      <option value="">No preference</option>
-                      {berthOptions(classType).map((b) => <option key={b} value={b}>{b}</option>)}
-                    </Select>
-                  </Field>
+                  <div className="sm:col-span-2">
+                    <p className="field-label">Berth preference <span className="font-normal text-muted">(optional)</span></p>
+                    <input type="hidden" {...register(`passengers.${i}.berthPreference`)} />
+                    <BerthMap
+                      classType={classType}
+                      seatNumber={null}
+                      selectedBerth={passengers?.[i]?.berthPreference || null}
+                      onSelectBerth={(berth) => setValue(`passengers.${i}.berthPreference`, berth || '', { shouldDirty: true, shouldTouch: true })}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

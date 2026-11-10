@@ -31,12 +31,12 @@ export function SearchForm({ initial, compact }: SearchFormProps) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="surface-card p-4 sm:p-5" aria-label="Search trains">
+    <form onSubmit={onSubmit} className="surface-card rounded-2xl p-4 sm:p-5" aria-label="Search trains">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_1fr_auto_auto] md:items-end">
         <StationPicker id="search-source" label="From" value={source} onChange={setSource} placeholder="Origin station" />
         <button
           type="button" onClick={swap} aria-label="Swap source and destination"
-          className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-brand hover:text-brand md:mb-0.5"
+          className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-brand transition-all hover:rotate-180 hover:border-brand hover:bg-brand hover:text-white md:mb-0.5"
         >
           <ArrowLeftRight className="h-4 w-4" />
         </button>

@@ -1,0 +1,12 @@
+.git
+.idea
+.mvn
+target
+frontend
+demo-api
+node_modules
+dist
+*.log
+.env
+.env.*
+!.env.example

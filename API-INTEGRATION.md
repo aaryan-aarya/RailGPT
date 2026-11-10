@@ -32,11 +32,13 @@ DTOs/entities mirror it field-for-field. Parity is enforced by:
 | 3 | Train search + availability | `/trains` | `/train/search?source&destination&date` | GET | public | `Train[]` (with `availability`) |
 | 4 | Train detail / class select | `/trains/$n` | `/train/{n}?date` (alias `/train/seats/{n}`) | GET | public | `Train` + `availability{class→ClassAvailability}` |
 | 5 | Multi-passenger booking | `/book/$n` | `/booking/book` | POST | USER | `Booking` (201) |
+| 5a | Retry-safe booking | booking submit | `/booking/book` (`Idempotency-Key` header) | POST | USER | existing or new `Booking` |
 | 6 | Booking confirmation | `/booking/confirmation/$pnr` | `/booking/pnr/{pnr}`, `/train/{n}` | GET | USER | `Booking`, `Train` |
 | 7 | PNR tracking (public masked) | `/pnr` | `/booking/pnr/{pnr}` | GET | public | `Booking` (masked for non-owners) |
 | 8 | Booking history | `/trips` | `/booking/my` | GET | USER | `Booking[]` |
 | 9 | Trip detail + cancellation | `/trips/$pnr` | `/booking/pnr/{pnr}`, `/booking/cancel/{pnr}` | GET, DELETE | USER | `Booking` |
-| 10 | Registration | `/register` | `/auth/register` | POST | public | `AuthResponse` (201) |
+| 9a | Ticket PDF + email | confirmation / trip detail | `/booking/pnr/{pnr}/ticket.pdf`, `/booking/pnr/{pnr}/email` | GET, POST | owner or ADMIN | PDF, `{message}` |
+| 10 | Registration | `/register` | `/auth/register`, `/auth/verify-otp`, `/auth/resend-otp` | POST | public | OTP challenge (202), then `AuthResponse` (201) |
 | 11 | Login | `/login` | `/auth/login` | POST | public | `AuthResponse` |
 | 12 | Session restore / logout | (app shell) | `/auth/me`, `/auth/logout` | GET, POST | cookie / public | `{user}`, `{ok}` |
 | 13 | Profile edit / password | `/profile` | `/user/profile` (GET/PATCH), `/user/change-password` | GET/PATCH/POST | USER | `{user}`, `{ok}` |
@@ -45,15 +47,20 @@ DTOs/entities mirror it field-for-field. Parity is enforced by:
 | 16 | Admin trains CRUD | `/admin/trains` | `/admin/trains`, `/train/add`, `/train/{n}` (PUT/DELETE) | GET/POST/PUT/DELETE | ADMIN | `Train[]`, `Train`, `{ok}` |
 | 17 | Admin bookings | `/admin/bookings` | `/admin/bookings` | GET | ADMIN | `Booking[]` |
 | 18 | Admin users | `/admin/users` | `/admin/users` | GET | ADMIN | `User[]` (no password) |
+| 19 | Admin booking audit | `/admin/audit?pnr=&page=&size=` | `/admin/audit` | GET | ADMIN | paged audit events |
 | — | Meta / health / banner | (app shell) | `/meta`, `/health` | GET | public | `Meta`, `{status}` |
 
 ## Request payloads (validated both sides)
-- **Register:** `{name(2–100), email, password(8–100), phone?}` → frontend Zod + Spring `@Valid`.
+- **Register:** `{name(2–100), email, password(8–100), phone?}` → Spring returns `{message,email}` (202) and sends a six-digit OTP.
+- **Verify OTP:** `{email, otp(6 digits)}` → creates the account and returns `AuthResponse` (201).
+- **Resend OTP:** `{email}` → `{message}` (200), limited by a 60-second cooldown.
 - **Login:** `{email, password}`.
 - **Profile PATCH:** `{name?(2–100), phone?(≤20)}`.
 - **Change password:** `{currentPassword, newPassword(8–100)}`.
 - **Booking:** `{trainNumber, journeyDate(YYYY-MM-DD), classType, passengers[1–6], boarding?, reservation?}`;
   passenger `{name(2–100), age(1–120), gender(M|F|O), berthPreference?}`.
+- Booking clients send a stable `Idempotency-Key` per submit attempt. Replaying the same key and payload returns the original booking; reusing it with a different payload returns `409 IDEMPOTENCY_KEY_REUSED`.
+- On successful booking, the Spring backend attempts to email ticket details and an attached PDF to the booking account email. The authenticated owner or an ADMIN can download the PDF or request another email using the ticket endpoints above.
 - **Train add/update:** `{trainNumber(4–10), trainName, source, destination, departureTime?, arrivalTime?, durationMinutes?, distanceKm?, trainType?, daysOfRun?, classes[≥1]}`;
   class `{classType, totalSeats(≥1), fare(≥0), racLimit(≥0), waitingLimit(≥0)}`.
 - **Chatbot:** `{question(1–500)}`.

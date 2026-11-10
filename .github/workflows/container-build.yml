@@ -1,0 +1,29 @@
+name: Container build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  images:
+    name: Build deployment images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build Spring Boot API image
+        run: docker build --pull -f Dockerfile -t railgpt-api:ci .
+
+      - name: Build web image
+        run: docker build --pull -f frontend/Dockerfile -t railgpt-web:ci frontend

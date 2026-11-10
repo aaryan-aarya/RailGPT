@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.irctc.irctcbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
@@ -32,7 +36,11 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 if (jwtUtil.isTokenValid(token)) {
                     String email = jwtUtil.extractEmail(token);
-                    String role = jwtUtil.extractRole(token);
+                    // Roles are authoritative in the database so an admin demotion
+                    // or account removal takes effect without waiting for JWT expiry.
+                    String role = userRepository.findByEmail(email)
+                            .map(user -> user.getRole())
+                            .orElseThrow(() -> new IllegalArgumentException("Account no longer exists."));
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             email, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

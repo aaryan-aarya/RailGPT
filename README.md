@@ -26,8 +26,8 @@ This is a small monorepo with three parts:
 The browser only ever calls same-origin relative URLs (`/api/...`). In development a
 Vite proxy forwards `/api` to whichever backend you choose:
 
-- **Demo API** on `:8090` (default) — zero setup, in-memory.
-- **Spring Boot** on `:8081` — the real backend, backed by PostgreSQL.
+- **Spring Boot** on `:8081` — the primary backend, backed by PostgreSQL.
+- **Demo API** on `:8090` — optional preview fallback, in-memory.
 
 Switch with `VITE_API_TARGET` (see below). The frontend code is identical in both modes.
 
@@ -44,10 +44,16 @@ Switch with `VITE_API_TARGET` (see below). The frontend code is identical in bot
 7. **PNR tracking** — public lookup masks personal data for non-owners.
 8. **Booking history** — filterable, sortable trips table.
 9. **Cancellation** — whole-PNR cancel; queued passengers are promoted automatically.
-10. **RAC / WL information** — clear status chips, berth map and queue positions.
-11. **Profile** — edit details, change password.
-12. **Travel assistant** — rule-based answers about RAC/WL, PNR, fares, cancellations.
-13. **Admin console** — role-guarded overview, train CRUD, bookings and users.
+10. **Retry-safe booking** — idempotency keys prevent duplicate reservations when a client retries after a network timeout.
+11. **Booking audit log** — admins can search a paginated history of booking, cancellation and queue-promotion events.
+12. **RAC / WL information** — clear status chips, berth map and queue positions.
+13. **Profile** — edit details, change password.
+14. **Travel assistant** — rule-based answers about RAC/WL, PNR, fares, cancellations.
+15. **Staff operations console** — dedicated admin sign-in, dashboard, booking desk, ticket email resend/cancel controls, train catalog CRUD, user role management, booking and staff activity audit, failed-email retry, and backend health/runtime metrics.
+16. **Passenger services hub** — unified entry points for existing RailGPT booking, PNR, trip, profile and assistant features, plus clearly marked web previews for unreserved/platform tickets, waitlist estimates, catering, porter, taxi, RailMadad, refunds and R-Wallet. External railway/provider transactions require authorized integrations and are not simulated as real.
+17. **Automatic booking emails** — ticket PDF and booking status on booking, cancellation notices, and emails when RAC / waiting-list passengers are promoted; durable outbox retries and admin recovery controls.
+18. **Production operations foundation** — health/readiness probes, Prometheus metrics, hardened response headers, cookie-origin checks, API rate limits in the deployment proxy, non-root containers, fail-fast production configuration validation, and a separate PostgreSQL application role.
+19. **Release checks** — GitHub Actions builds/tests the application and separately builds both deployment images; Dependabot proposes dependency and workflow updates.
 
 ---
 
@@ -73,10 +79,14 @@ export DB_URL="jdbc:postgresql://localhost:5432/railgpt"
 export DB_USERNAME="postgres"
 export DB_PASSWORD="<your-db-password>"
 export JWT_SECRET="$(openssl rand -base64 48)"   # >= 32 bytes
+export OTP_HASH_SECRET="$(openssl rand -base64 48)" # >= 32 bytes
+export MAIL_USERNAME="your-sender@gmail.com"
+export MAIL_APP_PASSWORD="<your-smtp-app-password>"
 export CORS_ALLOWED_ORIGINS="http://localhost:5173"
+export SEED_DATA_ENABLED="true" # local illustrative catalog only; prod profile disables seeding
 
 # 3. Run the backend. Flyway applies migrations, Hibernate validates, then the
-#    catalog + demo accounts are seeded (empty DB only).
+#    illustrative catalog + development accounts are seeded on an empty local database.
 ./mvnw spring-boot:run                            # :8081
 
 # 4. Frontend (second terminal). Defaults to the Spring backend on :8081.
@@ -93,6 +103,16 @@ Open `http://localhost:5173`. API docs: `http://localhost:8081/swagger-ui.html`.
 For a production profile: `./mvnw spring-boot:run -Dspring-boot.run.profiles=prod`
 (forces `ddl-auto=validate`, secure cookies; still no hardcoded credentials).
 
+After a booking, RailGPT places a ticket email with an attached PDF in its durable
+outbox. It also queues cancellation and passenger status-change notifications when
+a cancellation changes other passengers' RAC / waiting-list status. The worker
+sends each message and retries transient failures; admins can inspect and retry
+dead-letter jobs. The confirmation and trip detail screens also provide PDF
+download and email-again actions. SMTP must be configured through
+`MAIL_USERNAME` and `MAIL_APP_PASSWORD`; `OTP_HASH_SECRET` is required for
+registration OTP hashing. Ticket emails and PDFs identify bookings as illustrative
+RailGPT reservations, not IRCTC-issued tickets.
+
 ### Option B — demo fallback (no Java/DB needed)
 
 ```bash
@@ -105,7 +125,8 @@ cd frontend && VITE_API_TARGET=http://localhost:8090 npm run dev   # :5173
 The UI shows a "Demo environment" banner in this mode. Demo data is **not** real
 production inventory and is never presented as live Indian Railways availability.
 
-**Seeded accounts** (created in both the demo API and the Spring backend):
+**Development/demo accounts** (created by the demo API or Spring only when
+illustrative seeding is enabled and the user table is empty; never seeded in prod):
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -141,6 +162,8 @@ CI (`.github/workflows/backend-ci.yml`) runs two jobs on every push to `main` /
 Testcontainers, with a guard that fails if the integration tests are skipped) and
 **fullstack** (boots the real Spring Boot jar against a PostgreSQL service
 container, then runs the frontend live contract suite + unit tests + build).
+The `Container build` workflow also builds both Docker images on pushes and pull
+requests. Dependabot checks Maven, npm, and GitHub Actions dependencies weekly.
 
 ---
 
@@ -181,6 +204,7 @@ API (JavaScript) and the Spring backend (Java):
 - **Journey-date validation** (no past dates, up to 120 days in advance).
 - **Concurrency safety** in Spring via a pessimistic lock per train inside a
   transaction.
+- **Retry safety** via client idempotency keys and a unique persisted request fingerprint per user.
 
 ---
 
@@ -197,6 +221,10 @@ API (JavaScript) and the Spring backend (Java):
 - **Consistent error contract** `{ code, message }` with proper HTTP statuses.
 - **Bean validation** on every request body.
 - **Externalized secrets** (DB password, JWT key) and explicit CORS origins.
+- **Cookie-origin checks for unsafe browser requests**, plus CSP, HSTS, frame, referrer and permissions-policy headers.
+- **Actuator health/readiness and Prometheus metrics**; operational endpoints and API docs are admin-only.
+- **Production seeding disabled** and an opt-in one-time administrator bootstrap.
+- **Separate PostgreSQL application role** in the Compose deployment; the API does not connect as the database superuser.
 
 ---
 
@@ -204,7 +232,7 @@ API (JavaScript) and the Spring backend (Java):
 
 The schema is managed by **Flyway**, not `hibernate.ddl-auto=update`:
 
-- Migrations live in `src/main/resources/db/migration/` (`V1__initial_schema.sql`).
+- Migrations live in `src/main/resources/db/migration/` (initial schema, pending registrations, booking audit/idempotency, ticket email outbox, booking notification events, and staff activity through V6).
 - On startup Flyway applies pending migrations, then Hibernate runs with
   `ddl-auto=validate` (it checks the schema but never mutates it).
 - `application-prod.properties` hard-codes `ddl-auto=validate` + Flyway enabled and
@@ -280,6 +308,7 @@ backend is running.
 - `POST /booking/book`, `GET /booking/pnr/{pnr}`, `GET /booking/my`,
   `GET /booking/user/{email}`, `DELETE /booking/cancel/{pnr}`
 - `GET /admin/stats`, `/admin/users`, `/admin/trains`, `/admin/bookings` *(admin)*
+- `GET /admin/email-outbox?status=DEAD`, `POST /admin/email-outbox/{id}/retry` *(admin)*
 - `POST /chatbot/ask`
 - `GET /meta`, `/health`, `/stations`
 
@@ -307,3 +336,7 @@ RailGPT/
 ```
 
 See [`DECISIONS.md`](DECISIONS.md) for the reasoning behind the major choices.
+For container deployment, administrator bootstrap, backups, monitoring and recovery
+guidance, see [`OPERATIONS.md`](OPERATIONS.md). A public TLS ingress, secrets manager,
+scheduled off-host backups, and monitoring/alerting destination still need to be
+configured for the chosen hosting platform.

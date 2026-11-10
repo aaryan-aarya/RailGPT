@@ -10,6 +10,7 @@ import com.irctc.irctcbackend.service.TrainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -34,10 +35,15 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private TrainRepository trainRepository;
     @Autowired private TrainService trainService;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Value("${railgpt.seed.enabled:true}") private boolean seedEnabled;
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        if (!seedEnabled) {
+            log.info("Illustrative catalog and demo-account seeding is disabled.");
+            return;
+        }
         Resource resource = resourceLoader.getResource("classpath:seed-data.json");
         JsonNode root;
         try (InputStream in = resource.getInputStream()) {

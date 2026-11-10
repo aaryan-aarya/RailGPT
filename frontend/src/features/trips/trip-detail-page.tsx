@@ -11,6 +11,7 @@ import { FullPageLoader } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toast';
 import { ApiError } from '@/lib/api/client';
+import { TicketActions } from '@/features/booking/ticket-actions';
 
 export function TripDetailPage() {
   const { pnr } = useParams({ from: '/trips/$pnr' });
@@ -59,6 +60,8 @@ export function TripDetailPage() {
       </Link>
 
       <div className="mt-4"><PnrTicket booking={booking} train={train} /></div>
+
+      <TicketActions pnr={booking.pnr} />
 
       {confirmedPax && (
         <div className="mt-5">

@@ -26,6 +26,14 @@ export const AuthResponseSchema = z.object({
 });
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
+export const RegistrationStartedSchema = z.object({
+  message: z.string(),
+  email: z.string().email(),
+});
+export type RegistrationStarted = z.infer<typeof RegistrationStartedSchema>;
+export const RegistrationResponseSchema = z.union([AuthResponseSchema, RegistrationStartedSchema]);
+export type RegistrationResponse = z.infer<typeof RegistrationResponseSchema>;
+
 export const StationSchema = z.object({
   code: z.string(),
   name: z.string(),
@@ -115,6 +123,42 @@ export const BookingSchema = z.object({
 });
 export type Booking = z.infer<typeof BookingSchema>;
 
+export const BookingAuditEventSchema = z.object({
+  id: z.number(),
+  pnr: z.string(),
+  eventType: z.string(),
+  actorEmail: z.string().nullable().optional(),
+  details: z.string(),
+  createdAt: z.number(),
+});
+export type BookingAuditEvent = z.infer<typeof BookingAuditEventSchema>;
+
+export const BookingAuditPageSchema = z.object({
+  content: z.array(BookingAuditEventSchema),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  number: z.number(),
+  size: z.number(),
+});
+export type BookingAuditPage = z.infer<typeof BookingAuditPageSchema>;
+
+export const AdminActivityEventSchema = z.object({
+  id: z.number(), actorEmail: z.string(), action: z.string(), targetType: z.string(),
+  targetId: z.string(), details: z.string(), createdAt: z.number(),
+});
+export const AdminActivityPageSchema = z.object({
+  content: z.array(AdminActivityEventSchema), totalElements: z.number(), totalPages: z.number(), number: z.number(), size: z.number(),
+});
+export type AdminActivityPage = z.infer<typeof AdminActivityPageSchema>;
+
+export const AdminEmailOutboxItemSchema = z.object({
+  id: z.number(), pnr: z.string(), recipient: z.string(),
+  eventType: z.enum(['BOOKED', 'CANCELLED', 'STATUS_CHANGE']), statusSnapshot: z.string(),
+  status: z.enum(['PENDING', 'SENT', 'DEAD']),
+  attempts: z.number(), createdAt: z.number(), lastError: z.string().nullable(),
+});
+export type AdminEmailOutboxItem = z.infer<typeof AdminEmailOutboxItemSchema>;
+
 export const ChatResponseSchema = z.object({
   answer: z.string(),
   suggestions: z.array(z.string()).optional(),
@@ -132,6 +176,15 @@ export const AdminStatsSchema = z.object({
   revenue: z.number(),
 });
 export type AdminStats = z.infer<typeof AdminStatsSchema>;
+
+export const AdminReadinessSchema = z.object({ status: z.string() });
+export const AdminMetricCatalogSchema = z.object({ names: z.array(z.string()) });
+export const AdminMetricSchema = z.object({
+  name: z.string(), description: z.string().nullable().optional(), baseUnit: z.string().nullable().optional(),
+  measurements: z.array(z.object({ statistic: z.string(), value: z.number() })),
+  availableTags: z.array(z.object({ tag: z.string(), values: z.array(z.string()) })).optional(),
+});
+export type AdminMetric = z.infer<typeof AdminMetricSchema>;
 
 export const MetaSchema = z.object({
   mode: z.string(),

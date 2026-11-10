@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/toast';
 
-export function UserMenu() {
+export function UserMenu({ adminMode = false }: { adminMode?: boolean }) {
   const { user, status, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -20,10 +20,10 @@ export function UserMenu() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Link to="/login" className="hidden sm:inline-flex h-9 items-center rounded px-3 text-sm font-medium text-body hover:text-brand transition-colors">
+        <Link to="/login" className="hidden sm:inline-flex h-10 items-center rounded-full px-4 text-sm font-medium text-body transition-colors hover:bg-brand-soft hover:text-brand">
           Sign in
         </Link>
-        <Link to="/register" className="inline-flex h-9 items-center rounded bg-brand px-3.5 text-sm font-medium text-white hover:bg-brand-strong transition-colors">
+        <Link to="/register" className="inline-flex h-10 items-center rounded-full bg-brand px-4 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-px hover:bg-brand-strong">
           Create account
         </Link>
       </div>
@@ -56,12 +56,12 @@ export function UserMenu() {
         <DropdownMenuItem onSelect={() => navigate({ to: '/profile' })}>
           <UserIcon className="h-4 w-4" /> My profile
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate({ to: '/trips' })}>
+        {!adminMode && <DropdownMenuItem onSelect={() => navigate({ to: '/trips' })}>
           <Ticket className="h-4 w-4" /> My trips
-        </DropdownMenuItem>
+        </DropdownMenuItem>}
         {user.role === 'ADMIN' && (
           <DropdownMenuItem onSelect={() => navigate({ to: '/admin' })}>
-            <ShieldCheck className="h-4 w-4" /> Admin console
+            <ShieldCheck className="h-4 w-4" /> {adminMode ? 'Operations home' : 'Admin console'}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />

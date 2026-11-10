@@ -18,11 +18,17 @@ const TripsPage = lazy(() => import('@/features/trips/trips-page').then((m) => (
 const TripDetailPage = lazy(() => import('@/features/trips/trip-detail-page').then((m) => ({ default: m.TripDetailPage })));
 const ProfilePage = lazy(() => import('@/features/profile/profile-page').then((m) => ({ default: m.ProfilePage })));
 const AssistantPage = lazy(() => import('@/features/assistant/assistant-page').then((m) => ({ default: m.AssistantPage })));
+const ServicesPage = lazy(() => import('@/features/services/services-page').then((m) => ({ default: m.ServicesPage })));
 const AdminLayout = lazy(() => import('@/features/admin/admin-layout').then((m) => ({ default: m.AdminLayout })));
+const AdminLoginPage = lazy(() => import('@/features/admin/admin-login-page').then((m) => ({ default: m.AdminLoginPage })));
 const AdminOverviewPage = lazy(() => import('@/features/admin/overview-page').then((m) => ({ default: m.AdminOverviewPage })));
 const AdminTrainsPage = lazy(() => import('@/features/admin/trains-page').then((m) => ({ default: m.AdminTrainsPage })));
 const AdminBookingsPage = lazy(() => import('@/features/admin/bookings-page').then((m) => ({ default: m.AdminBookingsPage })));
 const AdminUsersPage = lazy(() => import('@/features/admin/users-page').then((m) => ({ default: m.AdminUsersPage })));
+const AdminAuditPage = lazy(() => import('@/features/admin/audit-page').then((m) => ({ default: m.AdminAuditPage })));
+const AdminEmailOutboxPage = lazy(() => import('@/features/admin/email-outbox-page').then((m) => ({ default: m.AdminEmailOutboxPage })));
+const AdminActivityPage = lazy(() => import('@/features/admin/activity-page').then((m) => ({ default: m.AdminActivityPage })));
+const AdminSystemPage = lazy(() => import('@/features/admin/system-page').then((m) => ({ default: m.AdminSystemPage })));
 
 // ---- Guards ----
 function requireAuth(locationHref: string) {
@@ -33,8 +39,9 @@ function requireAuth(locationHref: string) {
 }
 function requireAdmin(locationHref: string) {
   const { status, user } = useAuth.getState();
-  if (status !== 'authenticated') throw redirect({ to: '/login', search: { redirect: locationHref } });
-  if (user?.role !== 'ADMIN') throw redirect({ to: '/' });
+  if (status !== 'authenticated' || user?.role !== 'ADMIN') {
+    throw redirect({ to: '/admin/login', search: { redirect: locationHref } });
+  }
 }
 
 // ---- Search param validators ----
@@ -44,6 +51,15 @@ const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
 const rootRoute = createRootRoute({ component: AppShell, notFoundComponent: NotFoundPage });
 
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: LandingPage });
+
+const adminLoginRoute = createRoute({
+  getParentRoute: () => rootRoute, path: '/admin/login', component: AdminLoginPage,
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({ redirect: str(s.redirect) }),
+  beforeLoad: () => {
+    const { status, user } = useAuth.getState();
+    if (status === 'authenticated' && user?.role === 'ADMIN') throw redirect({ to: '/admin' });
+  },
+});
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute, path: '/login', component: LoginPage,
@@ -59,12 +75,12 @@ const trainsRoute = createRoute({
 
 const trainDetailRoute = createRoute({
   getParentRoute: () => rootRoute, path: '/trains/$trainNumber', component: TrainDetailPage,
-  validateSearch: (s: Record<string, unknown>): { date?: string; class?: string } => ({ date: str(s.date), class: str(s.class) }),
+  validateSearch: (s: Record<string, unknown>): { date?: string; class?: string; berth?: string } => ({ date: str(s.date), class: str(s.class), berth: str(s.berth) }),
 });
 
 const bookRoute = createRoute({
   getParentRoute: () => rootRoute, path: '/book/$trainNumber', component: BookingPage,
-  validateSearch: (s: Record<string, unknown>): { date?: string; class?: string } => ({ date: str(s.date), class: str(s.class) }),
+  validateSearch: (s: Record<string, unknown>): { date?: string; class?: string; berth?: string } => ({ date: str(s.date), class: str(s.class), berth: str(s.berth) }),
   beforeLoad: ({ location }) => requireAuth(location.href),
 });
 
@@ -93,6 +109,7 @@ const profileRoute = createRoute({
 });
 
 const assistantRoute = createRoute({ getParentRoute: () => rootRoute, path: '/assistant', component: AssistantPage });
+const servicesRoute = createRoute({ getParentRoute: () => rootRoute, path: '/services', component: ServicesPage });
 
 // Admin (layout + children)
 const adminRoute = createRoute({
@@ -103,12 +120,16 @@ const adminIndexRoute = createRoute({ getParentRoute: () => adminRoute, path: '/
 const adminTrainsRoute = createRoute({ getParentRoute: () => adminRoute, path: '/trains', component: AdminTrainsPage });
 const adminBookingsRoute = createRoute({ getParentRoute: () => adminRoute, path: '/bookings', component: AdminBookingsPage });
 const adminUsersRoute = createRoute({ getParentRoute: () => adminRoute, path: '/users', component: AdminUsersPage });
+const adminAuditRoute = createRoute({ getParentRoute: () => adminRoute, path: '/audit', component: AdminAuditPage });
+const adminEmailOutboxRoute = createRoute({ getParentRoute: () => adminRoute, path: '/email-outbox', component: AdminEmailOutboxPage });
+const adminActivityRoute = createRoute({ getParentRoute: () => adminRoute, path: '/activity', component: AdminActivityPage });
+const adminSystemRoute = createRoute({ getParentRoute: () => adminRoute, path: '/system', component: AdminSystemPage });
 
 const routeTree = rootRoute.addChildren([
-  indexRoute, loginRoute, registerRoute,
+  indexRoute, loginRoute, registerRoute, adminLoginRoute,
   trainsRoute, trainDetailRoute, bookRoute, confirmationRoute,
-  pnrRoute, tripsRoute, tripDetailRoute, profileRoute, assistantRoute,
-  adminRoute.addChildren([adminIndexRoute, adminTrainsRoute, adminBookingsRoute, adminUsersRoute]),
+  pnrRoute, tripsRoute, tripDetailRoute, profileRoute, assistantRoute, servicesRoute,
+  adminRoute.addChildren([adminIndexRoute, adminTrainsRoute, adminBookingsRoute, adminUsersRoute, adminAuditRoute, adminEmailOutboxRoute, adminActivityRoute, adminSystemRoute]),
 ]);
 
 export const router = createRouter({
