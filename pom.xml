@@ -27,7 +27,7 @@
              the PostgreSQL integration tests silently skip. 1.21.4 is the latest
              1.x line and stays API-compatible with spring-boot-testcontainers. -->
         <testcontainers.version>1.21.4</testcontainers.version>
-        <lombok.version>1.18.30</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <dependencies>
