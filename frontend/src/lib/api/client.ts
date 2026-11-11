@@ -9,7 +9,10 @@ import type { z } from 'zod';
 // Keep same-origin requests for local Docker/Vite, but allow a separately hosted
 // API in platforms such as Render. The configured value is the API origin only.
 const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN || '').replace(/\/+$/, '');
-const BASE_URL = `${API_ORIGIN}/api`;
+// Vite's local proxy accepts /api and strips that prefix before forwarding to
+// Spring Boot. The deployed API is addressed directly, where Spring routes
+// are rooted at / (for example /stations and /train/search).
+const BASE_URL = API_ORIGIN ? API_ORIGIN : '/api';
 
 let accessToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;

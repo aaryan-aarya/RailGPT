@@ -16,7 +16,9 @@ interface StationPickerProps {
 
 /** Accessible station combobox with type-ahead over the station catalog. */
 export function StationPicker({ id, value, onChange, placeholder = 'Select station', label, error }: StationPickerProps) {
-  const { data: stations = [] } = useQuery({ queryKey: ['stations'], queryFn: () => getStations(), staleTime: 1000 * 60 * 30 });
+  const { data: stations = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['stations'], queryFn: () => getStations(), staleTime: 1000 * 60 * 30,
+  });
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlight, setHighlight] = useState(0);
@@ -92,7 +94,16 @@ export function StationPicker({ id, value, onChange, placeholder = 'Select stati
           ref={listRef}
           className="absolute z-30 mt-1.5 max-h-64 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-pop"
         >
-          {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">No stations match “{query}”.</li>}
+          {isLoading && <li className="px-3 py-2.5 text-sm text-muted">Loading stations…</li>}
+          {isError && (
+            <li className="px-3 py-2.5 text-sm text-muted">
+              Stations could not be loaded.{' '}
+              <button type="button" className="font-medium text-brand underline" onMouseDown={(e) => e.preventDefault()} onClick={() => void refetch()}>
+                Retry
+              </button>
+            </li>
+          )}
+          {!isLoading && !isError && filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">No stations match “{query}”.</li>}
           {filtered.map((s, i) => (
             <li
               key={s.code}

@@ -25,10 +25,7 @@ services:
       - key: OTP_HASH_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS
-        fromService:
-          type: web
-          name: railgpt-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://railgpt-web.onrender.com
       - key: SEED_DATA_ENABLED
         value: "true"
       - key: SEED_DEMO_ACCOUNTS_ENABLED
